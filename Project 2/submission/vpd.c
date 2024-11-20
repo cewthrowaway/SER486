@@ -11,7 +11,7 @@ void read_vpd();
 
 
 /********** public definitions **********/
-void init() {
+void vpd_init() {
   // wait for the eeprom to free up
   while(isbusy());
   
@@ -24,7 +24,7 @@ void init() {
   }
 }
 
-void write_defaults() {
+void vpd_write_defaults() {
   /* update checksum for defaults */
   
   /* write the defaults */
@@ -32,7 +32,7 @@ void write_defaults() {
 
 }
 
-void is_data_valid() {
+void vpd_is_data_valid() {
   return (vpd.token == "SER") && is_checksum_valid();
 }
 
