@@ -1,4 +1,6 @@
 #include "eeprom.h"
+#include <stdio.h>
+
 /* 64 bytes / size of unsigned character*/
 #define BUFSIZE ((512) / sizeof(unsigned char))
 
@@ -8,7 +10,6 @@ unsigned char bufidx;
 unsigned char writesize;
 unsigned int writeaddr;
 unsigned char write_busy;
-
 
 // Define relevant Registers
 /* 7: 0 */
@@ -25,47 +26,45 @@ unsigned char write_busy;
 #define EE_RDY (*((volatile unsigned char *)0x2C))
 
 #pragma GCC push_options
-#pragma GCC optimize ("Os")
+#pragma GCC optimize("Os")
 /************************************************
-* eeprom_unlock
-* Unlock the eeprom for writing
-* Arguments ...
-* Returns ...
-* Changes ...
-*/
-void eeprom_unlock()
-{
-/* Write logical one to EEMPE */
-EECR |= (1<<EEMPE);
-/* Start eeprom write by setting EEPE */
-EECR |= (1<<EEPE);
+ * eeprom_unlock
+ * Unlock the eeprom for writing
+ * Arguments ...
+ * Returns ...
+ * Changes ...
+ */
+void eeprom_unlock() {
+  /* Write logical one to EEMPE */
+  EECR |= (1 << EEMPE);
+  /* Start eeprom write by setting EEPE */
+  EECR |= (1 << EEPE);
 }
 #pragma GCC pop_options
-
 
 /* declare private methods to enable and disable interrupt */
 void enable_interrupt();
 void disable_interrupt();
 
-
 /* Enabled when writebuf() places new data in the write buffer, this ISR sends
  * one byte at a time to the EEPROM. When the last byte is sent, it disables
  * futher EERPOM interrupts */
 /* should this bee vector 22 or 23?? Documents say 23 for EE ready */
-void __vector_22(){
-  if (EECR & (1<<EEPE)) { return; } /* not ready. Don't block */
+void __vector_22() {
+  if (EECR & (1 << EEPE)) {
+    return;
+  } /* not ready. Don't block */
 
   /* if you haven't written all characters in then keep writing */
   /* should we check to see if it is ready to write? */
   if (bufidx < writesize) {
     /* set low byte */
-    EEARL = writeaddr & 0xFF; 
+    EEARL = writeaddr & 0xFF;
     /* set high byte */
     EEARH = (writeaddr >> 8) & 0xFF;
     EEDR = writebuf[bufidx++];
     eeprom_unlock();
-  }
-  else {
+  } else {
 
     /* disable interrupts */
     disable_interrupt();
@@ -78,7 +77,8 @@ void __vector_22(){
  * for later writing to the EEPROM. The addr parameter specifies the location to
  * write the data to. */
 /* This function should not be called when another write is in progress. */
-void eeprom_writebuf(unsigned int addr, unsigned char *buf, unsigned char size) {
+void eeprom_writebuf(unsigned int addr, unsigned char *buf,
+                     unsigned char size) {
   // check that write_busy is 0
   if (write_busy > 0) {
     return;
@@ -97,13 +97,12 @@ void eeprom_writebuf(unsigned int addr, unsigned char *buf, unsigned char size) 
   bufidx = 0;
 
   /* copy buf to writebuf and configure writesize */
-  for(unsigned char i = 0; i < size; i++) {
+  for (unsigned char i = 0; i < size; i++) {
     writebuf[i] = buf[i];
   }
 
   writesize = size;
 
-  
   /* enable the EEPROM ready interrupts */
   enable_interrupt();
 }
@@ -114,6 +113,7 @@ void eeprom_readbuf(unsigned int addr, unsigned char *buf, unsigned char size) {
 
   // check that write_busy is 0
   if (write_busy > 0) {
+    printf("error reading: write busy");
     // write to the console
     return;
   }
@@ -125,23 +125,23 @@ void eeprom_readbuf(unsigned int addr, unsigned char *buf, unsigned char size) {
   for (unsigned char i = 0; i < size; i++) {
     /* set the address */
     /* set low byte */
-    EEARL = addr & 0xFF; 
+    EEARL = addr & 0xFF;
 
     /* set high byte */
     EEARH = (addr >> 8) & 0xFF;
 
     /* set mode to read */
-    EECR |= (1<<EERE);
+    EECR |= (1 << EERE);
     /* write from register to buffer */
     buf[i] = EEDR;
-
+    printf("%d: addressL: %X addressH: %X character: %c ", i, EEARL, EEARH,
+           buf[i]);
     addr++;
   }
-  
 }
 
 /* this functiosn returns 0 if write_busy is 0, otherwise, returns 1 */
-int eeprom_isbusy() { 
+int eeprom_isbusy() {
   int status;
   disable_interrupt();
   status = write_busy == 1;
@@ -149,12 +149,6 @@ int eeprom_isbusy() {
   return status;
 }
 
-void enable_interrupt() {
-  EECR |= (1<<EERIE);
-}
+void enable_interrupt() { EECR |= (1 << EERIE); }
 
-void disable_interrupt() {
-  EECR &= ~(1<<EERIE);
-}
-
-
+void disable_interrupt() { EECR &= ~(1 << EERIE); }
