@@ -11,3 +11,5 @@ void eeprom_readbuf(unsigned int, unsigned char *, unsigned char);
 int eeprom_isbusy();
 
 void test_eeprom_operations();
+
+void __vector_23(void) __attribute__ ((signal, used, externally_visible));

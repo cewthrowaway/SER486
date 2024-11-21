@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/bin/Debug/${workspaceFolderBasename}.elf",
             "stopAtEntry": true,
-            "cwd": "${fileDirname}",
+            "cwd": "${workspaceFolder}",
             "miDebuggerArgs": "-nx -fullname -quiet -args ${workspaceFolder}/bin/Debug/${workspaceFolderBasename}.elf",
             "MIMode": "gdb",
             "miDebuggerPath": "/usr/bin/avr-gdb",

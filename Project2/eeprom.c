@@ -1,14 +1,4 @@
 #include "eeprom.h"
-
-/* For debug mode define some macros to easily make logs to console*/
-#define DEBUG
-#ifdef DEBUG
-#include <stdio.h>
-#define LOG_ERROR(msg) printf("Error: %s\n", msg);
-#else
-#define LOG_ERROR(msg) do { } while (0);
-#endif
-
 /* 64 bytes / size of unsigned character*/
 #define BUFSIZE ((512) / sizeof(unsigned char))
 
@@ -18,6 +8,7 @@ unsigned char bufidx;
 unsigned char writesize;
 unsigned int writeaddr;
 unsigned char write_busy;
+
 
 // Define relevant Registers
 /* 7: 0 */
@@ -32,6 +23,25 @@ unsigned char write_busy;
 #define EERIE 3
 #define EERE 0
 #define EE_RDY (*((volatile unsigned char *)0x2C))
+
+#pragma GCC push_options
+#pragma GCC optimize ("Os")
+/************************************************
+* eeprom_unlock
+* Unlock the eeprom for writing
+* Arguments ...
+* Returns ...
+* Changes ...
+*/
+void eeprom_unlock()
+{
+/* Write logical one to EEMPE */
+EECR |= (1<<EEMPE);
+/* Start eeprom write by setting EEPE */
+EECR |= (1<<EEPE);
+}
+#pragma GCC pop_options
+
 
 /* declare private methods to enable and disable interrupt */
 void enable_interrupt();
@@ -53,11 +63,9 @@ void __vector__23(){
     /* set high byte */
     EEARH = (writeaddr >> 8) & 0xFF;
     EEDR = writebuf[bufidx++];
+    eeprom_unlock();
   }
-  else if(bufidx >= writesize) {
-    /* take EEPROM out of write mode */
-    EECR &= ~(1<<EEMPE);
-    EECR &= ~(1<<EEPE);
+  else {
 
     /* disable interrupts */
     disable_interrupt();
@@ -73,17 +81,12 @@ void __vector__23(){
 void eeprom_writebuf(unsigned int addr, unsigned char *buf, unsigned char size) {
   // check that write_busy is 0
   if (write_busy > 0) {
-    // write to the console
-    LOG_ERROR("Tried to write while EEPROM was busy")
     return;
   }
   if (size > 64) {
-    /* write error. buffer is too big */
-    LOG_ERROR("Tried to write too much data to buffer")
     return;
   }
   if ((addr + size) > 0x3FF) {
-    LOG_ERROR("Address out of range")
     return;
   }
   /* the EEPROM is now writing */
@@ -94,13 +97,12 @@ void eeprom_writebuf(unsigned int addr, unsigned char *buf, unsigned char size) 
   bufidx = 0;
 
   /* copy buf to writebuf and configure writesize */
-  memcpy(writebuf, buf, size);
+  for(unsigned char i = 0; i < size; i++) {
+    writebuf[i] = buf[i];
+  }
 
   writesize = size;
 
-  /* set the EEPROM to write mode */
-  EECR |= (1<<EEMPE);
-  EECR |= (1<<EEPE);
   
   /* enable the EEPROM ready interrupts */
   enable_interrupt();
@@ -113,12 +115,10 @@ void eeprom_readbuf(unsigned int addr, unsigned char *buf, unsigned char size) {
   // check that write_busy is 0
   if (write_busy > 0) {
     // write to the console
-    LOG_ERROR("Tried to read while eeprom was busy")
     return;
   }
   if (size > 64) {
     /* write error. buffer is too big */
-    LOG_ERROR("Tried to write too much data to buffer")
     return;
   }
 
@@ -141,7 +141,13 @@ void eeprom_readbuf(unsigned int addr, unsigned char *buf, unsigned char size) {
 }
 
 /* this functiosn returns 0 if write_busy is 0, otherwise, returns 1 */
-int eeprom_isbusy() { return write_busy==1; }
+int eeprom_isbusy() { 
+  int status;
+  disable_interrupt();
+  status = write_busy == 1;
+  enable_interrupt();
+  return status;
+}
 
 void enable_interrupt() {
   EECR |= (1<<EERIE);
