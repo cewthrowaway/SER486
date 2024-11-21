@@ -3,7 +3,8 @@
         {
             "label": "BuildDebug",
             "type": "shell",
-            "command": "make debug APPNAME=\"${workspaceFolderBasename}\""
+            "command": "make debug APPNAME=\"${workspaceFolderBasename}\"",
+            "problemMatcher": []
         },
         {
             "label": "BuildRelease",

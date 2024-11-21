@@ -1,6 +1,6 @@
 ########################################################################
 # Makefile settings - Can be customized.
-LIBS = 
+LIBS = lib_proj2.a
 RELEASE_OPTIMIZATION = Os
 USER_SETTINGS = -I ./ -DYOURNAME="DaVonte Carter Vault"
 

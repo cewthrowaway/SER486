@@ -7,9 +7,9 @@ struct config_struct {
   unsigned int lo_alarm;
   unsigned int lo_warn;
   char use_static_ip;
-  unsigned char[4] static_ip;
+  unsigned char static_ip[4];
   unsigned char checksum;
-}
+};
 
 /****** public variables *******/
 /* create the config */

@@ -6,7 +6,7 @@
 
 /*********** Private variables ***********/
 /* define the default */
-struct config_struct config_defaults {"ASU", 0x3FE, 0x3FE, 0x0000, 0x0001, 0, {192,168,1,100}, 0};
+struct config_struct config_defaults = {"ASU", 0x3FE, 0x3FE, 0x0000, 0x0001, 0, {192,168,1,100}, 0};
 /* set the modified as false */
 unsigned char config_modified = 0;
 
@@ -41,7 +41,8 @@ void config_set_modified() {
 
 /*********** Private definitions ***********/
 int is_data_valid() {
-  
+  // todo 
+  return 0;
 }
 void write_defaults() {
   /* upate_checksum() for defaults*/

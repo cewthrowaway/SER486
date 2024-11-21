@@ -7,7 +7,7 @@ struct vpd_struct {
   unsigned char mac_address[6];
   char county_of_origin[4];
   unsigned char checksum;
-}
+};
 
 void vpd_init();
 int vpd_is_data_valid(); 

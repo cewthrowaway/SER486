@@ -1,5 +1,5 @@
 #include "uart.h"
-#include "submission/eeprom.h"
+#include "eeprom.h"
 
 
 #include <assert.h>
