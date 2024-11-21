@@ -52,7 +52,7 @@ void disable_interrupt();
  * one byte at a time to the EEPROM. When the last byte is sent, it disables
  * futher EERPOM interrupts */
 /* should this bee vector 22 or 23?? Documents say 23 for EE ready */
-void __vector__23(){
+void __vector_22(){
   // if (EECR & (1<<EEPE)) { return; } /* not ready. Don't block */
 
   /* if you haven't written all characters in then keep writing */

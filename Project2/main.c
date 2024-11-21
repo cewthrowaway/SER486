@@ -23,9 +23,9 @@ void test_eeprom_uart() {
     eeprom_writebuf(test_address, write_buffer, test_size);
 
     // Simulate EEPROM write completion
-    // while (eeprom_isbusy()) {
-    //     // Simulated EEPROM ISR writes data
-    // }
+    while (eeprom_isbusy()) {
+        // Simulated EEPROM ISR writes data
+    }
 
     // Read data back from EEPROM
     eeprom_readbuf(test_address, read_buffer, test_size);
