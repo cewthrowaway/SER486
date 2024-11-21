@@ -9,3 +9,5 @@ void eeprom_writebuf(unsigned int, unsigned char *, unsigned char);
 void eeprom_readbuf(unsigned int, unsigned char *, unsigned char);
 /* this functiosn returns 0 if write_busy is 0, otherwise, returns 1 */
 int eeprom_isbusy();
+
+void test_eeprom_operations();

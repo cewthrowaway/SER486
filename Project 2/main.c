@@ -1,4 +1,5 @@
 #include "uart.h"
+#include "submission/eeprom.h"
 
 int main() {
   // variable to track if the eeprom has been dumped
@@ -23,6 +24,8 @@ int main() {
   // set the config modified state
   // clear the event log
   // add 3 recods to event log values: 0xaa, 0xbb, and 0xc
+  test_eeprom_operations();
+  
   while(1) {
     // update the blink fsm every
 
@@ -32,10 +35,10 @@ int main() {
     // if (config has changed && eeprom is not busy)
       // update config in EEPROM
 
-    if ((!eeprom_isbusy()) && (!dumped)) {
-          dump_eeprom(0,0x100);
-          dumped=1;
-    }
+    // if ((!eeprom_isbusy()) && (!dumped)) {
+    //       dump_eeprom(0,0x100);
+    //       dumped=1;
+    // }
 
   }
 }
