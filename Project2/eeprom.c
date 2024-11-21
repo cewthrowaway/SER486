@@ -1,4 +1,5 @@
 #include "eeprom.h"
+#include "uart.h"
 #include <stdio.h>
 
 /* 64 bytes / size of unsigned character*/
@@ -58,12 +59,16 @@ void __vector_22() {
   /* if you haven't written all characters in then keep writing */
   /* should we check to see if it is ready to write? */
   if (bufidx < writesize) {
+      /* set high byte */
+    EEARH = (writeaddr >> 8) & 0xFF;
     /* set low byte */
     EEARL = writeaddr & 0xFF;
-    /* set high byte */
-    EEARH = (writeaddr >> 8) & 0xFF;
-    EEDR = writebuf[bufidx++];
+
+    EEDR = writebuf[bufidx];
     eeprom_unlock();
+    // Debug print
+    // printf("%d: %X %X EEDR: %c\n\r", bufidx, EEARL, EEARH, EEDR);
+    bufidx++;
   } else {
 
     /* disable interrupts */
@@ -113,7 +118,6 @@ void eeprom_readbuf(unsigned int addr, unsigned char *buf, unsigned char size) {
 
   // check that write_busy is 0
   if (write_busy > 0) {
-    printf("error reading: write busy");
     // write to the console
     return;
   }
@@ -123,19 +127,20 @@ void eeprom_readbuf(unsigned int addr, unsigned char *buf, unsigned char size) {
   }
 
   for (unsigned char i = 0; i < size; i++) {
-    /* set the address */
-    /* set low byte */
-    EEARL = addr & 0xFF;
 
-    /* set high byte */
-    EEARH = (addr >> 8) & 0xFF;
+
+      /* set high byte */
+    EEARH = (writeaddr >> 8) & 0xFF;
+    /* set low byte */
+    EEARL = writeaddr & 0xFF;
 
     /* set mode to read */
     EECR |= (1 << EERE);
+
+    while (eeprom_isbusy());
+
     /* write from register to buffer */
     buf[i] = EEDR;
-    printf("%d: addressL: %X addressH: %X character: %c ", i, EEARL, EEARH,
-           buf[i]);
     addr++;
   }
 }
@@ -149,6 +154,9 @@ int eeprom_isbusy() {
   return status;
 }
 
-void enable_interrupt() { EECR |= (1 << EERIE); }
+void enable_interrupt() { 
+  EECR |= (1 << EERIE); 
+
+}
 
 void disable_interrupt() { EECR &= ~(1 << EERIE); }

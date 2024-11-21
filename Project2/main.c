@@ -1,6 +1,7 @@
 #include "uart.h"
 #include "eeprom.h"
 #include "led.h"
+#include "log.h"
 #include "util.h"
 
 
@@ -9,7 +10,7 @@ void test_eeprom_uart() {
     const char *test_string = "Hello, EEPROM!";
     unsigned char write_buffer[32];  // Use a buffer sized for the actual test string
     unsigned char read_buffer[32];   // Separate buffer for reading
-    unsigned int test_address = 0x01; // Example EEPROM start address
+    unsigned int test_address = 0x0010; // Example EEPROM start address
     unsigned char test_size = 0;
 
     // Manually copy test_string into write_buffer
@@ -57,6 +58,7 @@ int main() {
   // init led
   led_init();
   // init log
+  log_init();
   // init rtc
   // init vpd
 
@@ -72,7 +74,13 @@ int main() {
   // set the config_use_static_ip to 1
   // set the config modified state
   // clear the event log
+  log_clear();
+  log_add_record(0xaa);
+  log_add_record(0xbb);
+  log_add_record(0xc);
+
   // add 3 recods to event log values: 0xaa, 0xbb, and 0xc
+  uart_writechar(log_get_num_entries());
 
   while(1) {
     // update the blink fsm every
