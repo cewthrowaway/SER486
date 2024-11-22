@@ -105,4 +105,4 @@ venv.bak/
 
 .ccls-cache/
 
-Project2/bin/
+bin/
