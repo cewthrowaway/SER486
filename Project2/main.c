@@ -24,70 +24,70 @@
 
 void enable_global_interrupts()
 {
-  SREG |= (1 << I_BIT); // Set the I bit to enable interrupts
+  SREG |= (1 << I_BIT);  /* Set the I bit to enable interrupts */
 }
 
 int main()
 {
   enable_global_interrupts();
-  // variable to track if the eeprom has been dumped
+  /* variable to track if the eeprom has been dumped */
   int dumped = 0;
-  // init uart
+  /*  init uart */
   uart_init();
-  // init config
+  /*  init config */
   config_init();
-  // init led
+  /*  init led */
   led_init();
-  // init log
+  /*  init log */
   log_init();
-  // init rtc
+  /*  init rtc */
   rtc_init();
-  // init vpd
+  /*  init vpd */
   vpd_init();
 
-  // led blink pattern "--- -.-"
+  /*  led blink pattern "--- -.-" */
   led_set_blink("--- -.-");
-  // set RTC date/time to "01/01/2019 00:00:00"
+  /*  set RTC date/time to "01/01/2019 00:00:00" */
   rtc_set_by_datestr("01/01/2019 00:00:00");
 
-  // write the mandatory SER line and name to uart \n
+  /*  write the mandatory SER line and name to uart \n */
   uart_writestr("SER 486 Project 2 – DaVonte Carter vault\n\r");
-  // read/Write the model to uart \n
+  /*  read/Write the model to uart \n */
   uart_writestr(vpd.model);
   uart_writestr("\n\r");
-  // read/Write the manufactuer to uart \n
+  /*  read/Write the manufactuer to uart \n */
   uart_writestr(vpd.manufacturer);
   uart_writestr("\n\r");
-  // read/write the token to uart \n
+  /*  read/write the token to uart \n */
   uart_writestr(vpd.token);
   uart_writestr("\n\r");
 
-  // set the config_use_static_ip to 1
+  /*  set the config_use_static_ip to 1 */
   config.use_static_ip = 1;
-  // set the config modified state
+  /*  set the config modified state */
   config_set_modified();
-  // clear the event log
+  /*  clear the event log */
   log_clear();
 
-  // add 3 recods to event log values: 0xaa, 0xbb, and 0xc
+  /*  add 3 recods to event log values: 0xaa, 0xbb, and 0xc */
   log_add_record(0xaa);
   log_add_record(0xbb);
   log_add_record(0xcc);
 
   while (1)
   {
-    // update the blink fsm every
+    /*  update the blink fsm every */
     led_update();
 
-    // if (log has changed && eeprom is not busy)
-    // update the log in EEPROM
+    /*  if (log has changed && eeprom is not busy) */
+    /*  update the log in EEPROM */
     if (!eeprom_isbusy())
     {
       log_update();
     }
 
-    // if (config has changed && eeprom is not busy)
-    // update config in EEPROM
+    /*  if (config has changed && eeprom is not busy) */
+    /*  update config in EEPROM */
     if (!eeprom_isbusy())
     {
       config_update();

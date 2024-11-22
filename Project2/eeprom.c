@@ -28,7 +28,7 @@
 /* 64 bytes / size of unsigned character*/
 #define BUFSIZE ((512) / sizeof(unsigned char)) /* max buffer size*/
 
-// Define relevant Registers
+ /* Define relevant Registers */
 #define EEARL (*((volatile unsigned char *)0x41)) /* Low Byte */
 #define EEARH (*((volatile unsigned char *)0x42)) /* High Byte */
 #define EEAR  (*(volatile unsigned int *)0x41)    /* (16-bit) */
@@ -55,7 +55,7 @@ void eeprom_unlock() {
 #pragma GCC pop_options
 
 
-// Internal State
+/* Internal State */
 unsigned char writebuf[BUFSIZE]; /* Global EEPROM write buffer */
 unsigned char bufidx; /* Global EEPROM write buffer index */
 unsigned char writesize; /* Global EEPROM write buffer size */
@@ -121,7 +121,7 @@ void __vector_22() {
  ************************************************/
 void eeprom_writebuf(unsigned int addr, unsigned char *buf,
                      unsigned char size) {
-  // check that write_busy is 0
+ /* check that write_busy is 0 */
   if (write_busy > 0) {
     return;
   }
