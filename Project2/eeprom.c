@@ -12,11 +12,6 @@ unsigned char writesize;
 unsigned int writeaddr;
 volatile unsigned char write_busy;
 
-
-
-
-
-
 // Define relevant Registers
 /* 7: 0 */
 #define EEARL (*((volatile unsigned char *)0x41))
@@ -59,7 +54,6 @@ void disable_interrupt();
 /* should this bee vector 22 or 23?? Documents say 23 for EE ready */
 void __vector_22() {
 
-
   /* if you haven't written all characters in then keep writing */
   /* should we check to see if it is ready to write? */
   if (bufidx < writesize) {
@@ -67,12 +61,11 @@ void __vector_22() {
     EEARH = (writeaddr >> 8) & 0xFF;
     /* set low byte */
     EEARL = writeaddr & 0xFF;
-    // EEARL = writeaddr;
+
 
     EEDR = writebuf[bufidx];
     eeprom_unlock();
-    // Debug print
-    // printf("%d: %X %X EEDR: %c\n\r", bufidx, EEARL, EEARH, EEDR);
+
     bufidx++;
     writeaddr++;
   } else {

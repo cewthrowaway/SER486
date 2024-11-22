@@ -58,7 +58,6 @@ void config_write_defaults()
   /* upate_checksum() for defaults*/
   update_checksum((unsigned char *)&config_defaults, sizeof(config_defaults));
   /* write defaults to eeprom */
-  struct config_struct temp = config_defaults;
   eeprom_writebuf(0x0040, (unsigned char *)&config_defaults, sizeof(config_defaults));
 }
 void config_read()
