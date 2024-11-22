@@ -30,6 +30,9 @@ int eeprom_isbusy();
 
 void __vector_22(void) __attribute__ ((signal, used, externally_visible));
 
+
+void cache_init();
+
 #endif // EEPROM_H
 
 

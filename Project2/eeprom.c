@@ -27,6 +27,7 @@
 
 /* 64 bytes / size of unsigned character*/
 #define BUFSIZE ((512) / sizeof(unsigned char)) /* max buffer size*/
+#define CACHE_SIZE 1
 
  /* Define relevant Registers */
 #define EEARL (*((volatile unsigned char *)0x41)) /* Low Byte */
@@ -65,9 +66,9 @@ volatile unsigned char write_busy; /* Global EEPROM write state */
 /* declare private methods to enable and disable interrupt */
 void enable_interrupt();
 void disable_interrupt();
-void cache_get(unsigned int addr, unsigned char *buf, unsigned char size);
+unsigned char cache_get(unsigned int addr, unsigned char *buf, unsigned char size);
 void cache_del(unsigned int addr);
-void cache_add(unsigned int addr, unsigned char *buf, unsigned char size);
+void cache_write(unsigned int addr, unsigned char *buf, unsigned char size);
 
 /************************************************
  * __vector_22
@@ -237,26 +238,25 @@ void disable_interrupt() { EECR &= ~(1 << EERIE); }
 // do I prioritize memory or speed?
 struct cache_struct {
     unsigned char index;
-    unsigned int addr, 
-    unsigned char size
-    char data[BUF_SIZE]
+    unsigned int addr;
+    unsigned char size;
+    char data[BUFSIZE];
 };
 
-#define CACHE_SIZE 5
-#define CACHE_DEFAULT_INDEX = 0XFFFF
+
 struct cache_struct cache[CACHE_SIZE];
 unsigned char cache_counter = 0;
 void cache_init() {
     for(int i =0; i < CACHE_SIZE; i++) 
     {
         /* set all cache to invalid state */
-        cache[i].index = 0xFFFF;
+        cache[i].index = 0xFF;
     }
 }
 
 // add to cache
-void cache_add(unsigned int addr, unsigned char *buf, unsigned char size) {
-    if (size > BUF_SIZE) {
+void cache_write(unsigned int addr, unsigned char *buf, unsigned char size) {
+    if (size > BUFSIZE) {
         return;
     }
     /* create a variable to store available index */
@@ -279,7 +279,7 @@ void cache_add(unsigned int addr, unsigned char *buf, unsigned char size) {
         }
 
         // if current cache[i].index is < last_seen_idx
-        if (cache[i].index < last_seen_idx || cache[i].index == CACHE_DEFAULT_INDEX) 
+        if (cache[i].index < last_seen_idx || (cache[i].index == 0xFF)) 
         {
             last_seen_idx = cache[i].index;
             available_idx = i;
@@ -292,7 +292,7 @@ void cache_add(unsigned int addr, unsigned char *buf, unsigned char size) {
     cache[available_idx].index = cache_counter++;
     for (unsigned char i = 0; i < size; i++) 
     {
-        cache[available_idx].data = buf[i];
+        cache[available_idx].data[i] = buf[i];
     }
 }
 
@@ -304,14 +304,14 @@ void cache_del(unsigned int addr) {
         // if the address exists already overwrite INDEX
         if (cache[i].addr == addr) 
         {
-            cache[i].index = CACHE_DEFAULT_INDEX;
+            cache[i].index = 0xFF;
             return;
         }
     } // address not found
 }
 
 // read from cache
-void cache_get(unsigned int addr, unsigned char *buf, unsigned char size) {
+unsigned char cache_get(unsigned int addr, unsigned char *buf, unsigned char size) {
     // go through the list of cache items
     for(int i = 0; i < CACHE_SIZE; i++) 
     {
@@ -320,7 +320,7 @@ void cache_get(unsigned int addr, unsigned char *buf, unsigned char size) {
         {
             for (unsigned char j = 0; j < size; j++) 
             {
-                buf[j] = cache[i].data[j] 
+                buf[j] = cache[i].data[j]; 
             }
             return 1;
         }

@@ -45,6 +45,8 @@ int main()
   /*  init vpd */
   vpd_init();
 
+  cache_init();
+
   /*  led blink pattern "--- -.-" */
   led_set_blink("--- -.-");
   /*  set RTC date/time to "01/01/2019 00:00:00" */
