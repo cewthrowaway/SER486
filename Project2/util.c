@@ -1,3 +1,16 @@
+/********************************************************
+ * util.c
+ *
+ * SER486 Project 2
+ * Fall 2024
+ * Written By:  DaVonte Carter Vault
+ *
+ * this file defines the functions for accessing the
+ * EEPROM on the ATMega328P. It provides 3 public
+ * functions 
+ * the functions are:
+ * 
+ */
 #include "util.h"
 
 void update_checksum(unsigned char *data, unsigned int size)

@@ -1,31 +1,43 @@
+/********************************************************
+ * eeprom.c
+ *
+ * SER486 Project 2
+ * Fall 2024
+ * Written By:  DaVonte Carter Vault
+ *
+ * this file defines the functions for accessing the
+ * EEPROM on the ATMega328P. It provides 3 public
+ * functions 
+ * the functions are:
+ * void eeprom_writebuf(unsigned int addr, unsigned char *buf, unsigned char size)
+ *      - This function places the specified data into the write buffer for later 
+ *        writing to the EEPROM. 
+ * 
+ * void eeprom_readbuf(unsigned int addr, unsigned char *buf, unsigned char size)
+ *      - Reads a specified amount of data from the EEPROM starting at the specified
+ *        address and stores it in the provided buffer.
+ * void eeprom_is_busy()
+ *      - Checks the write status of the EEPROM.
+ * 
+ */
+
+
 #include "eeprom.h"
 #include "uart.h"
-#include <stdio.h>
 
 /* 64 bytes / size of unsigned character*/
-#define BUFSIZE ((512) / sizeof(unsigned char))
-
-// Internal State
-unsigned char writebuf[BUFSIZE];
-unsigned char bufidx;
-unsigned char writesize;
-unsigned int writeaddr;
-volatile unsigned char write_busy;
+#define BUFSIZE ((512) / sizeof(unsigned char)) /* max buffer size*/
 
 // Define relevant Registers
-/* 7: 0 */
-#define EEARL (*((volatile unsigned char *)0x41))
-/* 1:0 */
-#define EEARH (*((volatile unsigned char *)0x42))
-#define EEAR   (*(volatile unsigned int *)0x41)
-
-#define EEDR (*((volatile unsigned char *)0x40))
-#define EECR (*((volatile unsigned char *)0x3F))
-#define EEMPE 2
-#define EEPE 1
-#define EERIE 3
-#define EERE 0
-#define EE_RDY (*((volatile unsigned char *)0x2C))
+#define EEARL (*((volatile unsigned char *)0x41)) /* Low Byte */
+#define EEARH (*((volatile unsigned char *)0x42)) /* High Byte */
+#define EEAR  (*(volatile unsigned int *)0x41)    /* (16-bit) */
+#define EEDR (*((volatile unsigned char *)0x40))  /* Data Register */
+#define EECR (*((volatile unsigned char *)0x3F))  /* Control Register */
+#define EEMPE 2  /* Write Enable bit */
+#define EEPE  1  /* Write Enable bit */
+#define EERIE 3  /* Ready Interrupt Enable bit */
+#define EERE  0  /* Read Enable bit */
 
 #pragma GCC push_options
 #pragma GCC optimize("Os")
@@ -37,21 +49,36 @@ volatile unsigned char write_busy;
  * Changes ...
  */
 void eeprom_unlock() {
-  /* Write logical one to EEMPE */
-  EECR |= (1 << EEMPE);
-  /* Start eeprom write by setting EEPE */
-  EECR |= (1 << EEPE);
+  EECR |= (1 << EEMPE);  /* Write logical one to EEMPE */
+  EECR |= (1 << EEPE); /* Start eeprom write by setting EEPE */
 }
 #pragma GCC pop_options
+
+
+// Internal State
+unsigned char writebuf[BUFSIZE]; /* Global EEPROM write buffer */
+unsigned char bufidx; /* Global EEPROM write buffer index */
+unsigned char writesize; /* Global EEPROM write buffer size */
+unsigned int writeaddr; /* Global EEPROM write buffer target address */
+volatile unsigned char write_busy; /* Global EEPROM write state */
 
 /* declare private methods to enable and disable interrupt */
 void enable_interrupt();
 void disable_interrupt();
 
-/* Enabled when writebuf() places new data in the write buffer, this ISR sends
- * one byte at a time to the EEPROM. When the last byte is sent, it disables
- * futher EERPOM interrupts */
-/* should this bee vector 22 or 23?? Documents say 23 for EE ready */
+/************************************************
+ * __vector_22
+ * Interrupt Service Routine (ISR) for EEPROM operations.
+ * Description: This ISR is triggered when the write buffer is updated 
+ *              with new data by the writebuf() function. It sends one 
+ *              byte at a time to the EEPROM. 
+ * 
+ * Arguments: None.
+ * Returns: Nothing 
+ * Changes:
+ *    - Sends data to EEPROM.
+ *    - Disables EEPROM interrupts after the final byte is sent.
+ ************************************************/
 void __vector_22() {
 
   /* if you haven't written all characters in then keep writing */
@@ -77,17 +104,25 @@ void __vector_22() {
   }
 }
 
-/* this function places the data (specified buf and size) into the write buffer
- * for later writing to the EEPROM. The addr parameter specifies the location to
- * write the data to. */
-/* This function should not be called when another write is in progress. */
+/************************************************
+ * eeprom_writebuf
+ * Description: This function places the specified data 
+ *              into the write buffer for later 
+ *              writing to the EEPROM. 
+ * 
+ * Arguments:
+ *    - addr: The starting address in EEPROM where the data will be written.
+ *    - buf: Pointer to the buffer containing the data to be written.
+ *    - size: Number of bytes to write from the buffer to the EEPROM.
+ * 
+ * Returns: None.
+ * Changes:
+ *    - Populates the write buffer with the provided data.
+ ************************************************/
 void eeprom_writebuf(unsigned int addr, unsigned char *buf,
                      unsigned char size) {
   // check that write_busy is 0
   if (write_busy > 0) {
-    return;
-  }
-  if (size > 64) {
     return;
   }
   if ((addr + size) > 0x3FF) {
@@ -111,10 +146,22 @@ void eeprom_writebuf(unsigned int addr, unsigned char *buf,
   enable_interrupt();
 }
 
-/* this function reads a specified amount of data(size) from the EEPROM starting
- * at a specified address(addr) and places it in the specified buffer(buf) */
+/************************************************
+ * eeprom_readbuf
+ * Description: Reads a specified amount of data from the EEPROM 
+ *              starting at the specified address and stores it in 
+ *              the provided buffer.
+ * 
+ * Arguments:
+ *    - addr: The starting address in the EEPROM to read from.
+ *    - buf: Pointer to the buffer where the read data will be stored.
+ *    - size: The number of bytes to read from the EEPROM.
+ * 
+ * Returns: None.
+ * Changes:
+ *    - Populates the provided buffer with data read from the EEPROM.
+ ************************************************/
 void eeprom_readbuf(unsigned int addr, unsigned char *buf, unsigned char size) {
-
   if (size > 64) {
     /* write error. buffer is too big */
     return;
@@ -122,35 +169,60 @@ void eeprom_readbuf(unsigned int addr, unsigned char *buf, unsigned char size) {
   while (eeprom_isbusy());
 
   for (unsigned char i = 0; i < size; i++) {
-
-
-      /* set high byte */
+    /* set high byte */
     EEARH = (addr >> 8) & 0xFF;
     /* set low byte */
     EEARL = addr & 0xFF;
-
-    // EEARL = addr;
-
     /* set mode to read */
     EECR |= (1 << EERE);
-
-
     /* write from register to buffer */
     buf[i] = EEDR;
     addr++;
   }
 }
 
-/* this functiosn returns 0 if write_busy is 0, otherwise, returns 1 */
+/************************************************
+ * eeprom_isbusy
+ * Description: Checks the write status of the EEPROM.
+ * 
+ * Arguments: None.
+ * 
+ * Returns:
+ *    - 0: EEPROM is not busy (write_busy == 0).
+ *    - 1: EEPROM is busy (write_busy == 1).
+ * 
+ * Changes: None.
+ ************************************************/
 int eeprom_isbusy() {
-
-
   return  write_busy == 1;
 }
 
+/************************************************
+ * enable_interrupt
+ * Description: Enables EEPROM interrupt
+ * 
+ * Arguments: None.
+ * 
+ * Returns: None.
+ * 
+ * Changes:
+ *    - Sets the interrupt enable flag or specific interrupt registers, 
+ *      allowing the system to respond to interrupt events.
+ ************************************************/
 void enable_interrupt() { 
   EECR |= (1 << EERIE); 
-
 }
 
+/************************************************
+ * disable_interrupt
+ * Description: Disables EEPROM interrupt
+ * 
+ * Arguments: None.
+ * 
+ * Returns: None.
+ * 
+ * Changes:
+ *    - Sets the interrupt disable flag or specific interrupt registers, 
+ *      allowing the system to respond to interrupt events.
+ ************************************************/
 void disable_interrupt() { EECR &= ~(1 << EERIE); }

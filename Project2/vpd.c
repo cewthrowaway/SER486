@@ -1,3 +1,16 @@
+/********************************************************
+ * util.c
+ *
+ * SER486 Project 2
+ * Fall 2024
+ * Written By:  DaVonte Carter Vault
+ *
+ * this file defines the utility functions that are
+ * common to multiple functions throughout the project
+ * and provides 3 functions.
+ * the functions are:
+ * 
+ */
 #include "eeprom.h"
 #include "util.h"
 #include "vpd.h"

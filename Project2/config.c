@@ -1,3 +1,16 @@
+/********************************************************
+ * config.c
+ *
+ * SER486 Project 2
+ * Fall 2024
+ * Written By:  DaVonte Carter Vault
+ *
+ * this file defines the functions for accessing the
+ * writing and reading the of theconfig on the ATMega328P. 
+ * It provides 3 public functions. the functions are:
+ * 
+ */
+
 #include "eeprom.h"
 #include "util.h"
 #include "config.h"
