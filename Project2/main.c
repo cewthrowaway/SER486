@@ -80,6 +80,7 @@ int main()
     {
       config_update();
     }
+    
     /* dump memory once and only once*/
     if ((!eeprom_isbusy()) && (!dumped))
     {

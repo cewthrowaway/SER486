@@ -1,33 +1,54 @@
 #include "util.h"
 
-void update_checksum(unsigned char* data, unsigned int size) {
-    if (size == 0) return; // Handle empty data structure
-
+void update_checksum(unsigned char *data, unsigned int size)
+{
     unsigned int sum = 0;
+    unsigned int i;
 
-    // Calculate the sum of all bytes except the last one
-    for (unsigned int i = 0; i < size - 1; i++) {
+    /* Edge case: If size is zero or one, nothing to update */
+    if (size <= 1)
+    {
+        return;
+    }
+
+    /* Sum all bytes except the last one (which is the checksum byte) */
+    for (i = 0; i < size - 1; i++)
+    {
         sum += (unsigned char)data[i];
     }
 
-    // Calculate the checksum value for the last byte
-    data[size - 1] = (char)(-sum & 0xFF); // Ensure it wraps within one byte
+    /* Calculate the checksum so that the total sum modulo 256 is zero */
+    data[size - 1] = (unsigned char)(-(sum & 0xFF));
 }
 
-
-int is_checksum_valid(unsigned char* data, unsigned int size) {
-    if (size == 0) return 0; // Invalid for empty data structure
-
+int is_checksum_valid(unsigned char *data, unsigned int size)
+{
     unsigned int sum = 0;
+    unsigned int i;
 
-    // Calculate the sum of all bytes
-    for (unsigned int i = 0; i < size; i++) {
-        sum += (unsigned char)data[i];
+    /* Edge case: If size is zero or one, checksum cannot be valid */
+    if (size <= 1)
+    {
+        return 0;
     }
 
-    // Return 1 if the sum is zero, otherwise 0
-    return (sum & 0xFF) == 0;
+    /* Sum all bytes including the checksum byte */
+    for (i = 0; i < size; i++)
+    {
+        sum += data[i];
+    }
+
+    /* Check if the total sum modulo 256 is zero */
+    if ((sum & 0xFF) == 0)
+    {
+        return 1; /* Checksum is valid */
+    }
+    else
+    {
+        return 0; /* Checksum is invalid */
+    }
 }
+
 int cmp_str(const char *str1, const char *str2)
 {
   while (*str1 && *str2)

@@ -18,11 +18,11 @@ void config_init()
 {
 
   // wait for the eeprom to not be busy
-  while (!eeprom_isbusy())
+  while (eeprom_isbusy())
     ;
 
   /* init config w/ eeprom read */
-  eeprom_readbuf(0x0040, (unsigned char*)&config, sizeof(config));
+  eeprom_readbuf(0x0040, (unsigned char *)&config, sizeof(config));
   /* while the data is not valid */
   while (!config_is_data_valid())
   {
@@ -37,9 +37,9 @@ void config_update()
   if (eeprom_isbusy() || !config_modified)
     return;
   /* update the checksum */
-  update_checksum((unsigned char*)&config, sizeof(config));
+  update_checksum((unsigned char *)&config, sizeof(config));
   /* write config to eeprom */
-  eeprom_writebuf(0x0040, (unsigned char*)&config, sizeof(config));
+  eeprom_writebuf(0x0040, (unsigned char *)&config, sizeof(config));
   /* clear the modified flag */
   config_modified = 0;
 }
@@ -51,16 +51,17 @@ void config_set_modified()
 /*********** Private definitions ***********/
 int config_is_data_valid()
 {
-  return cmp_str(config.token,"ASU") && is_checksum_valid((unsigned char*)&config,sizeof(config));
+  return cmp_str(config.token, "ASU") && is_checksum_valid((unsigned char *)&config, sizeof(config));
 }
 void config_write_defaults()
 {
   /* upate_checksum() for defaults*/
-  update_checksum((unsigned char*)&config_defaults, sizeof(config_defaults));
+  update_checksum((unsigned char *)&config_defaults, sizeof(config_defaults));
   /* write defaults to eeprom */
-  eeprom_writebuf(0x0040, (unsigned char*)&config_defaults, sizeof(config_defaults));
+  struct config_struct temp = config_defaults;
+  eeprom_writebuf(0x0040, (unsigned char *)&config_defaults, sizeof(config_defaults));
 }
 void config_read()
 {
-  eeprom_readbuf(0x0040, (unsigned char*)&config, sizeof(config));
+  eeprom_readbuf(0x0040, (unsigned char *)&config, sizeof(config));
 }
