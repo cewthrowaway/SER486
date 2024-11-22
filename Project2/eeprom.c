@@ -84,15 +84,15 @@ void __vector_22() {
   /* if you haven't written all characters in then keep writing */
   /* should we check to see if it is ready to write? */
   if (bufidx < writesize) {
-      /* set high byte */
+    /* set high byte */
     EEARH = (writeaddr >> 8) & 0xFF;
     /* set low byte */
     EEARL = writeaddr & 0xFF;
-
-
+    /* write data to the eeprom buffer */
     EEDR = writebuf[bufidx];
+    /* unlock eeprom and start the write */
     eeprom_unlock();
-
+    /* go to the next letter in buffer and write to the next address */
     bufidx++;
     writeaddr++;
   } else {

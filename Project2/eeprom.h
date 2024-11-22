@@ -1,3 +1,21 @@
+/********************************************************
+ * eeprom.h
+ *
+ * This file provides function declarations for the SER486
+ * EEPROM library functions. These functions enable reading, 
+ * writing, and checking the status of the EEPROM on the 
+ * ATMega328P microcontroller.
+ *
+ *
+ * Author:   Davonte Carter Vault
+ * Date:     Fall 2024
+ * Revision: 1.0
+ *
+ *
+ */
+#if !defined(EEPROM_H)
+#define EEPROM_H
+
 
 /* this function places the data (specified buf and size) into the write buffer
  * for later writing to the EEPROM. The addr parameter specifies the location to
@@ -11,3 +29,7 @@ void eeprom_readbuf(unsigned int addr, unsigned char *buf, unsigned char size);
 int eeprom_isbusy();
 
 void __vector_22(void) __attribute__ ((signal, used, externally_visible));
+
+#endif // EEPROM_H
+
+

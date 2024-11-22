@@ -1,4 +1,18 @@
-
+/********************************************************
+ * config.h
+ *
+ * This file defines the functions for managing the 
+ * configuration data in the project. It stores data config
+ * data in EEPROM and locally in config.
+ *
+ *
+ * Author:   DaVonte Carter Vault
+ * Date:     Fall 2024
+ * Revision: 1.0
+ *
+ ********************************************************/
+#if !defined(CONFIG_H)
+#define CONFIG_H
 
 struct config_struct {
   char token[4];
@@ -19,3 +33,8 @@ struct config_struct config;
 void config_init();
 void config_update();
 void config_set_modified();
+
+
+#endif // CONFIG_H
+
+

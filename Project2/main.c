@@ -5,10 +5,9 @@
  * Fall 2024
  * Written By: DaVonte Carter Vault
  *
- * this file defines the functions for accessing the
- * EEPROM on the ATMega328P. It provides 3 public
- * functions 
- * the functions are:
+ * this file defines implements uart, eeprom, led, log, utility,
+ * config, rtc, and vpd functionality.
+ * 
  * 
  */
 #include "uart.h"

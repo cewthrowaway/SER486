@@ -13,6 +13,21 @@
  */
 #include "util.h"
 
+/************************************************
+ * update_checksum
+ * Description: Reads a specified amount of data from the EEPROM 
+ *              starting at the specified address and stores it in 
+ *              the provided buffer.
+ * 
+ * Arguments:
+ *    - addr: The starting address in the EEPROM to read from.
+ *    - buf: Pointer to the buffer where the read data will be stored.
+ *    - size: The number of bytes to read from the EEPROM.
+ * 
+ * Returns: None.
+ * Changes:
+ *    - Populates the provided buffer with data read from the EEPROM.
+ ************************************************/
 void update_checksum(unsigned char *data, unsigned int size)
 {
     unsigned int sum = 0;
@@ -33,7 +48,21 @@ void update_checksum(unsigned char *data, unsigned int size)
     /* Calculate the checksum so that the total sum modulo 256 is zero */
     data[size - 1] = (unsigned char)(-(sum & 0xFF));
 }
-
+/************************************************
+ * is_checksum_valid
+ * Description: Reads a specified amount of data from the EEPROM 
+ *              starting at the specified address and stores it in 
+ *              the provided buffer.
+ * 
+ * Arguments:
+ *    - addr: The starting address in the EEPROM to read from.
+ *    - buf: Pointer to the buffer where the read data will be stored.
+ *    - size: The number of bytes to read from the EEPROM.
+ * 
+ * Returns: None.
+ * Changes:
+ *    - Populates the provided buffer with data read from the EEPROM.
+ ************************************************/
 int is_checksum_valid(unsigned char *data, unsigned int size)
 {
     unsigned int sum = 0;
@@ -61,7 +90,21 @@ int is_checksum_valid(unsigned char *data, unsigned int size)
         return 0; /* Checksum is invalid */
     }
 }
-
+/************************************************
+ * cmp_str
+ * Description: Reads a specified amount of data from the EEPROM 
+ *              starting at the specified address and stores it in 
+ *              the provided buffer.
+ * 
+ * Arguments:
+ *    - addr: The starting address in the EEPROM to read from.
+ *    - buf: Pointer to the buffer where the read data will be stored.
+ *    - size: The number of bytes to read from the EEPROM.
+ * 
+ * Returns: None.
+ * Changes:
+ *    - Populates the provided buffer with data read from the EEPROM.
+ ************************************************/
 int cmp_str(const char *str1, const char *str2)
 {
   while (*str1 && *str2)

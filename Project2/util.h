@@ -4,7 +4,7 @@
  * this file provides function declarations for various
  * utility functions for SER486.
  *
- * Author:   Doug Sandy
+ * Author:   Doug Sandy and DaVonte Carter Vault
  * Date:     3/24/2018
  * Revision: 1.0
  *

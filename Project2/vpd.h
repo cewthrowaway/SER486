@@ -1,3 +1,17 @@
+/********************************************************
+ * vpd.h
+ *
+ * This file defines the structure and declarations for 
+ * managing the Vital Product data. 
+ *
+ * Author:   DaVonte Carter Vault
+ * Date:     Fall 2024
+ * Revision: 1.0
+ *
+ ********************************************************/
+
+#ifndef VPD_H
+#define VPD_H
 struct vpd_struct {
   char token[4];
   char model[12];
@@ -16,3 +30,4 @@ void vpd_init();
 int vpd_is_data_valid(); 
 void vpd_write_defaults();
 
+#endif
