@@ -3,99 +3,88 @@
 #include "led.h"
 #include "log.h"
 #include "util.h"
-
-
-void test_eeprom_uart() {
-    // Define test data
-    const char *test_string = "Hello, EEPROM!";
-    unsigned char write_buffer[32];  // Use a buffer sized for the actual test string
-    unsigned char read_buffer[32];   // Separate buffer for reading
-    unsigned int test_address = 0x0010; // Example EEPROM start address
-    unsigned char test_size = 0;
-
-    // Manually copy test_string into write_buffer
-    for (test_size = 0; test_string[test_size] != '\0'; test_size++) {
-        write_buffer[test_size] = test_string[test_size];
-    }
-    write_buffer[test_size] = '\0';  // Include null terminator
-    test_size++;  // Add 1 for the null terminator
-
-    // Write test data to EEPROM
-    eeprom_writebuf(test_address, write_buffer, test_size);
-
-    // Simulate EEPROM write completion
-    while (eeprom_isbusy()) {
-        // Simulated EEPROM ISR writes data
-    }
-
-    // Read data back from EEPROM
-    eeprom_readbuf(test_address, read_buffer, test_size);
-
-    // Null-terminate the read buffer for safety
-    read_buffer[test_size - 1] = '\0';
-
-    // Output the read data via UART
-    uart_writestr("Read from EEPROM: ");
-    uart_writestr((char *)read_buffer);
-    uart_writestr("\n");
-}
+#include "config.h"
+#include "rtc.h"
+#include "vpd.h"
 
 #define SREG (*(volatile unsigned char *)0x5F)
 #define I_BIT 7
 
-void enable_global_interrupts() {
-    SREG |= (1 << I_BIT);  // Set the I bit to enable interrupts
+void enable_global_interrupts()
+{
+  SREG |= (1 << I_BIT); // Set the I bit to enable interrupts
 }
 
-int main() {
+int main()
+{
   enable_global_interrupts();
   // variable to track if the eeprom has been dumped
   int dumped = 0;
-  test_eeprom_uart();
   // init uart
   uart_init();
-  // init conig
+  // init config
+  config_init();
   // init led
   led_init();
   // init log
   log_init();
   // init rtc
+  rtc_init();
   // init vpd
+  vpd_init();
 
   // led blink pattern "--- -.-"
-  led_set_blink("--- -.-"); 
+  led_set_blink("--- -.-");
   // set RTC date/time to "01/01/2019 00:00:00"
-  
+  rtc_set_by_datestr("01/01/2019 00:00:00");
+
   // write the mandatory SER line and name to uart \n
+  uart_writestr("SER 486 Project 2 – DaVonte Carter vault\n\r");
   // read/Write the model to uart \n
+  uart_writestr(vpd.model);
+  uart_writestr("\n\r");
   // read/Write the manufactuer to uart \n
+  uart_writestr(vpd.manufacturer);
+  uart_writestr("\n\r");
   // read/write the token to uart \n
+  uart_writestr(vpd.token);
+  uart_writestr("\n\r");
 
   // set the config_use_static_ip to 1
+  config.use_static_ip = 1;
   // set the config modified state
+  config_set_modified();
   // clear the event log
   log_clear();
-  log_add_record(0xaa);
-  log_add_record(0xbb);
-  log_add_record(0xc);
 
   // add 3 recods to event log values: 0xaa, 0xbb, and 0xc
-  uart_writechar(log_get_num_entries());
+  log_add_record(0xaa);
+  log_add_record(0xbb);
+  log_add_record(0xcc);
 
-  while(1) {
+  while (1)
+  {
     // update the blink fsm every
     led_update();
 
-    // if (log has changed && eeprom is not busy) 
-      // update the log in EEPROM
-
-    // if (config has changed && eeprom is not busy)
-      // update config in EEPROM
-
-    if ((!eeprom_isbusy()) && (!dumped)) {
-          dump_eeprom(0,0x100);
-          dumped=1;
+    // if (log has changed && eeprom is not busy)
+    // update the log in EEPROM
+    if (!eeprom_isbusy())
+    {
+      log_update();
     }
 
+    // if (config has changed && eeprom is not busy)
+    // update config in EEPROM
+    if (!eeprom_isbusy())
+    {
+      config_update();
+    }
+    /* dump memory once and only once*/
+    if ((!eeprom_isbusy()) && (!dumped))
+    {
+      dump_eeprom(0, 0x100);
+      dumped = 1;
+    }
   }
 }

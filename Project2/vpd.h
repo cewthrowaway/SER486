@@ -9,6 +9,10 @@ struct vpd_struct {
   unsigned char checksum;
 };
 
+struct vpd_struct vpd;
+
+
 void vpd_init();
 int vpd_is_data_valid(); 
 void vpd_write_defaults();
+

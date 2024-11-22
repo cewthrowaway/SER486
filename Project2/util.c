@@ -28,3 +28,16 @@ int is_checksum_valid(unsigned char* data, unsigned int size) {
     // Return 1 if the sum is zero, otherwise 0
     return (sum & 0xFF) == 0;
 }
+int cmp_str(const char *str1, const char *str2)
+{
+  while (*str1 && *str2)
+  {
+    if (*str1 != *str2)
+    {
+      return 0;
+    }
+    str1++;
+    str2++;
+  }
+  return *str1 == '\0' && *str2 == '\0';
+}

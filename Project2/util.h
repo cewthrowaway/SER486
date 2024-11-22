@@ -29,4 +29,5 @@ int is_checksum_valid(unsigned char *data, unsigned int dsize);
 /* dump the contents of the eeprom (instructor provided code) */
 void dump_eeprom(unsigned int start_address, unsigned int numbytes);
 
+int cmp_str(const char *str1, const char *str2);
 #endif // UTIL_H_INCLUDED
