@@ -10,14 +10,20 @@ unsigned char writebuf[BUFSIZE];
 unsigned char bufidx;
 unsigned char writesize;
 unsigned int writeaddr;
-unsigned char write_busy;
+volatile unsigned char write_busy;
+
+
+
+
+
 
 // Define relevant Registers
 /* 7: 0 */
 #define EEARL (*((volatile unsigned char *)0x41))
 /* 1:0 */
 #define EEARH (*((volatile unsigned char *)0x42))
-/* 7:0 */
+#define EEAR   (*(volatile unsigned int *)0x41)
+
 #define EEDR (*((volatile unsigned char *)0x40))
 #define EECR (*((volatile unsigned char *)0x3F))
 #define EEMPE 2
@@ -52,9 +58,7 @@ void disable_interrupt();
  * futher EERPOM interrupts */
 /* should this bee vector 22 or 23?? Documents say 23 for EE ready */
 void __vector_22() {
-  if (EECR & (1 << EEPE)) {
-    return;
-  } /* not ready. Don't block */
+
 
   /* if you haven't written all characters in then keep writing */
   /* should we check to see if it is ready to write? */
@@ -63,12 +67,14 @@ void __vector_22() {
     EEARH = (writeaddr >> 8) & 0xFF;
     /* set low byte */
     EEARL = writeaddr & 0xFF;
+    // EEARL = writeaddr;
 
     EEDR = writebuf[bufidx];
     eeprom_unlock();
     // Debug print
     // printf("%d: %X %X EEDR: %c\n\r", bufidx, EEARL, EEARH, EEDR);
     bufidx++;
+    writeaddr++;
   } else {
 
     /* disable interrupts */
@@ -116,28 +122,25 @@ void eeprom_writebuf(unsigned int addr, unsigned char *buf,
  * at a specified address(addr) and places it in the specified buffer(buf) */
 void eeprom_readbuf(unsigned int addr, unsigned char *buf, unsigned char size) {
 
-  // check that write_busy is 0
-  if (write_busy > 0) {
-    // write to the console
-    return;
-  }
   if (size > 64) {
     /* write error. buffer is too big */
     return;
   }
+  while (eeprom_isbusy());
 
   for (unsigned char i = 0; i < size; i++) {
 
 
       /* set high byte */
-    EEARH = (writeaddr >> 8) & 0xFF;
+    EEARH = (addr >> 8) & 0xFF;
     /* set low byte */
-    EEARL = writeaddr & 0xFF;
+    EEARL = addr & 0xFF;
+
+    // EEARL = addr;
 
     /* set mode to read */
     EECR |= (1 << EERE);
 
-    while (eeprom_isbusy());
 
     /* write from register to buffer */
     buf[i] = EEDR;
@@ -147,11 +150,9 @@ void eeprom_readbuf(unsigned int addr, unsigned char *buf, unsigned char size) {
 
 /* this functiosn returns 0 if write_busy is 0, otherwise, returns 1 */
 int eeprom_isbusy() {
-  int status;
-  disable_interrupt();
-  status = write_busy == 1;
-  enable_interrupt();
-  return status;
+
+
+  return  write_busy == 1;
 }
 
 void enable_interrupt() { 
