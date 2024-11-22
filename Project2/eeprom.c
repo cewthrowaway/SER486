@@ -226,3 +226,97 @@ void enable_interrupt() {
  *      allowing the system to respond to interrupt events.
  ************************************************/
 void disable_interrupt() { EECR &= ~(1 << EERIE); }
+
+
+// do I prioritize memory or speed?
+struct cache_struct {
+    unsigned char index;
+    unsigned int addr, 
+    unsigned char size
+    char data[BUF_SIZE]
+};
+
+#define CACHE_SIZE 5
+#define CACHE_DEFAULT_INDEX = 0XFFFF
+struct cache_struct cache[CACHE_SIZE];
+unsigned char cache_counter = 0;
+void cache_init() {
+    for(int i =0; i < CACHE_SIZE; i++) 
+    {
+        /* set all cache to invalid state */
+        cache[i].index = 0xFFFF;
+    }
+}
+
+// add to cache
+void cache_add(unsigned int addr, unsigned char *buf, unsigned char size) {
+    if (size > BUF_SIZE) {
+        return;
+    }
+    /* create a variable to store available index */
+    unsigned char available_idx = 0;
+    unsigned char last_seen_idx = 0;
+    
+    // go through the list of cache items
+    for(int i = 0; i < CACHE_SIZE; i++) 
+    {
+        // if the address exists already overwrite it
+        if (cache[i].addr == addr) 
+        {
+            for (unsigned char j = 0; j < size; j++) 
+            {
+                cache[i].data[j] = buf[j];
+            }
+            cache[i].size = size;
+            cache[i].index = cache_counter++;
+            return;
+        }
+
+        // if current cache[i].index is < last_seen_idx
+        if (cache[i].index < last_seen_idx || cache[i].index == CACHE_DEFAULT_INDEX) 
+        {
+            last_seen_idx = cache[i].index;
+            available_idx = i;
+        }
+    } // address not found
+    
+    // if the address wasn't found and there is space in the cache, write to the first available
+    // if the address wasn't found and there is no space, delete the first one. first in first out
+    cache[available_idx].addr = addr;
+    cache[available_idx].index = cache_counter++;
+    for (unsigned char i = 0; i < size; i++) 
+    {
+        cache[available_idx].data = buf[i];
+    }
+}
+// delete from cache
+void cache_del(unsigned int addr) {
+    // go through the list of cache items
+    for(int i = 0; i < CACHE_SIZE; i++) 
+    {
+        // if the address exists already overwrite INDEX
+        if (cache[i].addr == addr) 
+        {
+            cache[i].index = CACHE_DEFAULT_INDEX;
+            return;
+        }
+    } // address not found
+}
+
+// read from cache
+void cache_get(unsigned int addr, unsigned char *buf, unsigned char size) {
+    // go through the list of cache items
+    for(int i = 0; i < CACHE_SIZE; i++) 
+    {
+        // if the address exists already overwrite INDEX
+        if (cache[i].addr == addr) 
+        {
+            for (unsigned char j = 0; j < size; j++) 
+            {
+                buf[j] = cache[i].data[j] 
+            }
+            cache[i].index = CACHE_DEFAULT_INDEX;
+            return;
+        }
+    } // address not found
+}
