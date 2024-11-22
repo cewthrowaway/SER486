@@ -258,7 +258,7 @@ void cache_add(unsigned int addr, unsigned char *buf, unsigned char size) {
     unsigned char last_seen_idx = 0;
     
     // go through the list of cache items
-    for(int i = 0; i < CACHE_SIZE - 1; i++) 
+    for(int i = 0; i < CACHE_SIZE; i++) 
     {
         // if the address exists already overwrite it
         if (cache[i].addr == addr) 
@@ -306,7 +306,7 @@ void cache_del(unsigned int addr) {
 // read from cache
 void cache_get(unsigned int addr, unsigned char *buf, unsigned char size) {
     // go through the list of cache items
-    for(int i = 0; i < CACHE_SIZE -1; i++) 
+    for(int i = 0; i < CACHE_SIZE; i++) 
     {
         // if the address exists already overwrite INDEX
         if (cache[i].addr == addr) 
