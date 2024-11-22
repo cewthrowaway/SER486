@@ -65,6 +65,9 @@ volatile unsigned char write_busy; /* Global EEPROM write state */
 /* declare private methods to enable and disable interrupt */
 void enable_interrupt();
 void disable_interrupt();
+void cache_get(unsigned int addr, unsigned char *buf, unsigned char size);
+void cache_del(unsigned int addr);
+void cache_add(unsigned int addr, unsigned char *buf, unsigned char size);
 
 /************************************************
  * __vector_22
@@ -128,6 +131,7 @@ void eeprom_writebuf(unsigned int addr, unsigned char *buf,
   if ((addr + size) > 0x3FF) {
     return;
   }
+  cache_write(addr, buf, size);
   /* the EEPROM is now writing */
   write_busy = 1;
   /* change the write address */
@@ -166,8 +170,10 @@ void eeprom_readbuf(unsigned int addr, unsigned char *buf, unsigned char size) {
     /* write error. buffer is too big */
     return;
   }
-  while (eeprom_isbusy());
-
+  while (eeprom_isbusy())
+  {
+    if (cache_get(addr, buf, size)) { return; }
+  }
   for (unsigned char i = 0; i < size; i++) {
     /* set high byte */
     EEARH = (addr >> 8) & 0xFF;
@@ -289,6 +295,7 @@ void cache_add(unsigned int addr, unsigned char *buf, unsigned char size) {
         cache[available_idx].data = buf[i];
     }
 }
+
 // delete from cache
 void cache_del(unsigned int addr) {
     // go through the list of cache items
@@ -315,7 +322,8 @@ void cache_get(unsigned int addr, unsigned char *buf, unsigned char size) {
             {
                 buf[j] = cache[i].data[j] 
             }
-            return;
+            return 1;
         }
     } // address not found
+ return 0;
 }
