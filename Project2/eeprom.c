@@ -315,7 +315,6 @@ void cache_get(unsigned int addr, unsigned char *buf, unsigned char size) {
             {
                 buf[j] = cache[i].data[j] 
             }
-            cache[i].index = CACHE_DEFAULT_INDEX;
             return;
         }
     } // address not found
