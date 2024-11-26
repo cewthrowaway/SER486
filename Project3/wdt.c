@@ -69,11 +69,14 @@ void wdt_reset()
 */
 void wdt_force_restart()
 {
-    __asm__ __volatile__("cli");
+    uart_writestr("WDT force restart\n");
+    wdt_disable_interrupt();
     wdt_reset();
     /* turn off WDT interrupt but keep WDE for reset */
     WDTCSR &= ~(1<<WDIE);
     WDTCSR |= (1<<WDE);
-    /* wait for watchdog reset */
-    while(1);
+    log_add_record(EVENT_SHUTDOWN);
+    log_update_noisr();
+    config_update_noisr();
+    while(1); /* wait for a hardware reset */
 }
