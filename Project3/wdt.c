@@ -11,6 +11,7 @@
 #define WDCE 4
 #define WDE 3
 #define WDP2 2
+#define WDP1 1
 #define WDP0 0
 
 #pragma GCC push_options
@@ -50,9 +51,9 @@ void wdt_init()
     wdt_reset();
     /* start timed sequence */
     WDTCSR |= (1<<WDCE) | (1<<WDE);
-    /* adjust timeout value = 256k cycles (0.5 s) */
+    /* adjust timeout value = 256k cycles (2.0 s) */
     WDTCSR &= ~(1<<WDP3); /* clear the WDP3 bit */
-    WDTCSR |= (1<<WDP2) | (1<<WDP3) | (1<<WDP0);
+    WDTCSR |= (1<<WDP2) | (1<<WDP1) | (1<<WDP0);
     wdt_enable_interrupt();
     
 }
@@ -68,6 +69,9 @@ void wdt_reset()
 */
 void wdt_force_restart()
 {
-    /* turn off WDT */
-    wdt_disable_interrupt();
+    /* turn off WDT interrupt but keep WDE for reset */
+    WDTCSR &= ~(1<<WDIE);
+    WDTCSR |= (1<<WDE);
+    /* wait for watchdog reset */
+    while(1);
 }

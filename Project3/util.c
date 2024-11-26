@@ -19,7 +19,7 @@ int update_tcrit_hi(int value)
 */
 int update_twarn_hi(int value)
 {
-  if ((value > config.lo_warn) && (value < config.hi_warn)) {
+  if ((value > config.lo_warn) && (value < config.hi_alarm)) {
     config.hi_warn = value;
     config_set_modified();
     return 0;

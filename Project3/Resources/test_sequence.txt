@@ -1,0 +1,23 @@
+
+type <ctrl-c> 
+ 
+delete /device/log 
+
+get /device 
+ 
+
+PUT /device/config?twarn_hi=50 
+ 
+PUT /device/config?tcrit_hi=60 
+ 
+
+PUT /device/config?tcrit_hi=150 
+
+
+PUT /device/config?tcrit_hi=60 
+
+PUT /device/config?tcrit_hi=150 
+PUT /device/config?twarn_hi=140 
+
+GET /device 
+ 
