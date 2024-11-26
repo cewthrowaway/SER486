@@ -34,6 +34,7 @@ void wdt_enable_interrupt()
 void __vector_6(void) __attribute__((signal, used, externally_visible)); 
 void __vector_6() 
 {
+    uart_writestr("WDT interrupt\n");
     /* turn on the status led */
     led_on();
     /* write the event to log */
@@ -52,8 +53,7 @@ void wdt_init()
     /* start timed sequence */
     WDTCSR |= (1<<WDCE) | (1<<WDE);
     /* adjust timeout value = 256k cycles (2.0 s) */
-    WDTCSR &= ~(1<<WDP3); /* clear the WDP3 bit */
-    WDTCSR |= (1<<WDP2) | (1<<WDP1) | (1<<WDP0);
+    WDTCSR = (1<<WDE) | (1<<WDIE) | (1<<WDP2) | (1<<WDP1) | (1<<WDP0);
     wdt_enable_interrupt();
     
 }
@@ -69,6 +69,8 @@ void wdt_reset()
 */
 void wdt_force_restart()
 {
+    __asm__ __volatile__("cli");
+    wdt_reset();
     /* turn off WDT interrupt but keep WDE for reset */
     WDTCSR &= ~(1<<WDIE);
     WDTCSR |= (1<<WDE);
