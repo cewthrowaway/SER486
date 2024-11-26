@@ -51,11 +51,13 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
       if (current <= lowarn) {
         alarm_send(EVENT_LO_WARN);
         set_warn_led();
+        log_add_record(EVENT_LO_WARN);
         tempfsm_state = WARN_LO_1;
       }
       else if (current >= hiwarn) {
         alarm_send(EVENT_HI_WARN);
         set_warn_led();
+        log_add_record(EVENT_HI_WARN);
         tempfsm_state = WARN_HI_1;
       }
     break;
@@ -65,6 +67,7 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
       if (current >= hiwarn) {
         alarm_send(EVENT_HI_WARN);
         set_warn_led();
+        log_add_record(EVENT_HI_WARN);
         tempfsm_state = WARN_HI_1;
       }
       /* current <= lowarn */
@@ -78,6 +81,7 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
       if (current <= lowarn) {
         alarm_send(EVENT_LO_WARN);
         set_warn_led();
+        log_add_record(EVENT_LO_WARN);
         tempfsm_state = WARN_LO_1;
       }
       /* current >= hiwarn */
@@ -91,6 +95,7 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
         if (current >= hicrit) {
           alarm_send(EVENT_HI_ALARM);
           set_crit_led();
+          log_add_record(EVENT_HI_ALARM);
           tempfsm_state = CRIT_HI;
         }
       /* current < hiwarn */
@@ -124,6 +129,7 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
         alarm_send(EVENT_LO_ALARM);
         led_set_blink(".");
         tempfsm_state = CRIT_LO;
+        log_add_record(EVENT_LO_ALARM);
       }
       /* current > lowarn */
       else if (current > lowarn) {
