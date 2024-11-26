@@ -1,5 +1,7 @@
 #include "wdt.h"
 #include "log.h"
+#include "led.h"
+#include "config.h"
 
 /* Watch Dog Timer Control Register */
 #define WDTCSR (*((volatile unsigned char *)0x60))
@@ -38,7 +40,7 @@ void __vector_6()
     /* try to save the log before restart */
     log_update_noisr();
     /* try to save the config before restart */
-    config_updatE_noisr();
+    config_update_noisr();
 }
 
 /* initialize the watchdog timer for a 2 second timeout and interrupt+reset mode */
@@ -58,7 +60,7 @@ void wdt_init()
 /* reset the watchdog timer so that it does not time out. */
 void wdt_reset()
 {
-    __built_in_avr_wdr();
+    __builtin_avr_wdr();
 }
 
 /* force a system restart (reset only, no interrupt) by disabling the watchdog
