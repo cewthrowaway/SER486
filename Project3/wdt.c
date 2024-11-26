@@ -2,6 +2,7 @@
 #include "log.h"
 #include "led.h"
 #include "config.h"
+#include "uart.h"
 
 /* Watch Dog Timer Control Register */
 #define WDTCSR (*((volatile unsigned char *)0x60))
@@ -23,7 +24,7 @@ void wdt_disable_interrupt()
     /* Save current interrupt state */
     unsigned char sreg = SREG;
     /* Disable interrupts */
-    cli();
+    SREG &= ~(1<<7);
     
     /* Start timed sequence */
     WDTCSR |= (1<<WDCE) | (1<<WDE);
@@ -39,7 +40,7 @@ void wdt_enable_interrupt()
     /* Save current interrupt state */
     unsigned char sreg = SREG;
     /* Disable interrupts */
-    cli();
+    SREG &= ~(1<<7);
     
     /* Start timed sequence */
     WDTCSR |= (1<<WDCE) | (1<<WDE);
@@ -90,14 +91,17 @@ void wdt_reset()
 */
 void wdt_force_restart()
 {
-    uart_writestr("WDT force restart\n");
     wdt_disable_interrupt();
     wdt_reset();
-    /* turn off WDT interrupt but keep WDE for reset */
-    WDTCSR &= ~(1<<WDIE);
-    WDTCSR |= (1<<WDE);
+    /* write the events to log and force update*/
     log_add_record(EVENT_SHUTDOWN);
     log_update_noisr();
+    /* save the config */
     config_update_noisr();
-    while(1); /* wait for a hardware reset */
+
+    /* reduce timeout and reset-only mode */
+    WDTCSR |= (1<<WDCE) | (1<<WDE);
+    WDTCSR = (1<<WDE);  /* Enable reset, shortest timeout */
+
+    while(1);  /* Wait for reset */
 }
