@@ -18,6 +18,15 @@ void tempfsm_init()
   tempfsm_state = NORM_1;
 }
 
+void set_warn_led() {
+led_set_blink("-");
+}
+void set_crit_led() {
+led_set_blink(".");
+}
+void set_normal_led() {
+led_set_blink(" ");
+}
 
 /* update the state of the temperature sensor finite state machine (provides
 * hysteresis).  Sends alarms and updates the led blink based on state transitions */
@@ -27,19 +36,21 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
     case NORM_1:
       if (current <= lowarn) {
         alarm_send(EVENT_LO_WARN);
-        led_set_blink("-");
+        set_warn_led();
         tempfsm_state = WARN_LO_1;
       }
       else if (current >= hiwarn) {
         alarm_send(EVENT_HI_WARN);
-        led_set_blink("-");
+        set_warn_led();
         tempfsm_state = WARN_HI_1;
       }
     break;
+    
     case NORM_2:
       /* current >= hiwarn */
       if (current >= hiwarn) {
         alarm_send(EVENT_HI_WARN);
+        set_warn_led();
         tempfsm_state = WARN_HI_1;
       }
       /* current <= lowarn */
@@ -47,29 +58,33 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
         tempfsm_state = WARN_LO_1;
       }
     break;
+    
     case NORM_3:
       /* current <= lowarn */
       if (current <= lowarn) {
         alarm_send(EVENT_LO_WARN);
+        set_warn_led();
         tempfsm_state = WARN_LO_1;
       }
       /* current >= hiwarn */
       else if (current >= hiwarn) {
         tempfsm_state = WARN_HI_1;
       }
-    break
+    break;
+      
     case WARN_HI_1:
       /* current >= hicrit */
         if (current >= hicrit) {
           alarm_send(EVENT_HI_ALARM);
-          led_set_blink(".");
+          set_crit_led();
           tempfsm_state = CRIT_HI;
         }
       /* current < hiwarn */
-      if (current < hiwarn) {
+      else if (current < hiwarn) {
         tempfsm_state = NORM_3;
       }
     break;
+    
     case WARN_HI_2:
       /* current >= hicrit */
       if (current >= hicrit) {
@@ -81,25 +96,46 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
         tempfsm_state = NORM_3;
       }
     break;
+    
     case CRIT_HI:
       /* current <hicrit */
       if (current < hicrit) {
-        
+        tempfsm_state = WARN_HI_2;
+      }
     break;
+    
     case WARN_LO_1:
       /* current <=locrit */
-
+      if (current <= locrit) {
+        alarm_send(EVENT_LO_ALARM);
+        led_set_blink(".");
+        tempfsm_state = CRIT_LO;
+      }
       /* current > lowarn */
+      else if (current > lowarn) {
+        tempfsm_state = NORM_2;
+      }
     break;
+    
     case WARN_LO_2:
       /* current <= locrit */
+      if (current <= locrit) {
+        tempfsm_state = CRIT_LO;
+      }
       
       /* currnt > lowarn */
+      else if (current > lowarn) {
+        tempfsm_state = NORM_2;
+      }
     break;
+    
     case CRIT_LO:
       /* current > locrit */
-
+      if (current > locrit) {
+        tempfsm_state = WARN_LO_2;
+      }
     break;
+    
     default:
       /* move to a valid state */
       tempfsm_state = NORM_1;
@@ -111,6 +147,7 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
 /* reset the state machine to the initial state (normal) */
 void tempfsm_reset()
 {
+  tempfsm_state = NORM_1;
 }
 
 
