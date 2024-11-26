@@ -43,8 +43,7 @@ void wdt_enable_interrupt()
     /* Start timed sequence */
     WDTCSR |= (1<<WDCE) | (1<<WDE);
     /* Set WDE and WDIE within 4 cycles */
-    WDTCSR = (1<<WDE) | (1<<WDIE);
-    
+    WDTCSR = (1<<WDE) | (1<<WDIE) | (1<<WDP2) | (1<<WDP1) | (1<<WDP0);
 
 }
 #pragma GCC pop_options
@@ -76,8 +75,7 @@ void wdt_init()
     wdt_reset();
     /* start timed sequence */
     WDTCSR |= (1<<WDCE) | (1<<WDE);
-    /* adjust timeout value = 256k cycles (2.0 s) */
-    WDTCSR = (1<<WDE) | (1<<WDIE) | (1<<WDP2) | (1<<WDP1) | (1<<WDP0);
+    
     wdt_enable_interrupt();
         /* Restore interrupt state */
     SREG = sreg;
@@ -94,17 +92,10 @@ void wdt_reset()
 */
 void wdt_force_restart()
 {
+    /* disable the watchdog interrupt */
     wdt_disable_interrupt();
+    /* reset the watchdog timer */
     wdt_reset();
-    /* write the events to log and force update*/
-    log_add_record(EVENT_SHUTDOWN);
-    log_update_noisr();
-    /* save the config */
-    config_update_noisr();
-
-    /* reduce timeout and reset-only mode */
-    WDTCSR |= (1<<WDCE) | (1<<WDE);
-    WDTCSR = (1<<WDE);  /* Enable reset, shortest timeout */
 
     while(1);  /* Wait for reset */
 }

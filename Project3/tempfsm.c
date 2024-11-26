@@ -72,6 +72,7 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
       }
       /* current <= lowarn */
       else if (current <= lowarn) {
+        set_warn_led();
         tempfsm_state = WARN_LO_1;
       }
     break;
@@ -86,6 +87,7 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
       }
       /* current >= hiwarn */
       else if (current >= hiwarn) {
+        set_warn_led();
         tempfsm_state = WARN_HI_1;
       }
     break;
@@ -100,6 +102,7 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
         }
       /* current < hiwarn */
       else if (current < hiwarn) {
+        set_normal_led();
         tempfsm_state = NORM_3;
       }
     break;
@@ -107,11 +110,13 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
     case WARN_HI_2:
       /* current >= hicrit */
       if (current >= hicrit) {
+        set_crit_led();
         tempfsm_state = CRIT_HI;
       }
         
       /* current < hiwarn */
       else if (current < hiwarn) {
+        set_normal_led();
         tempfsm_state = NORM_3;
       }
     break;
@@ -119,6 +124,7 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
     case CRIT_HI:
       /* current <hicrit */
       if (current < hicrit) {
+        set_warn_led();
         tempfsm_state = WARN_HI_2;
       }
     break;
@@ -127,12 +133,13 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
       /* current <=locrit */
       if (current <= locrit) {
         alarm_send(EVENT_LO_ALARM);
-        led_set_blink(".");
+        set_crit_led();
         tempfsm_state = CRIT_LO;
         log_add_record(EVENT_LO_ALARM);
       }
       /* current > lowarn */
       else if (current > lowarn) {
+        set_normal_led();
         tempfsm_state = NORM_2;
       }
     break;
@@ -140,11 +147,13 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
     case WARN_LO_2:
       /* current <= locrit */
       if (current <= locrit) {
+        set_crit_led();
         tempfsm_state = CRIT_LO;
       }
       
       /* currnt > lowarn */
       else if (current > lowarn) {
+        set_normal_led();
         tempfsm_state = NORM_2;
       }
     break;
@@ -152,12 +161,14 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
     case CRIT_LO:
       /* current > locrit */
       if (current > locrit) {
+        set_warn_led();
         tempfsm_state = WARN_LO_2;
       }
     break;
     
     default:
       /* move to a valid state */
+      set_normal_led();
       tempfsm_state = NORM_1;
     break;
   }
