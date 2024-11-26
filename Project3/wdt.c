@@ -14,19 +14,40 @@
 #define WDP1 1
 #define WDP0 0
 
+#define SREG (*((volatile unsigned char *)0x5F))
+
 #pragma GCC push_options
 #pragma GCC optimize("Os")
 void wdt_disable_interrupt() 
 {
-    /* clear WDE and WDIE to disable interrupts */
-    WDTCSR &= ~(1<<WDE);
-    WDTCSR &= ~(1<<WDIE);
+    /* Save current interrupt state */
+    unsigned char sreg = SREG;
+    /* Disable interrupts */
+    cli();
+    
+    /* Start timed sequence */
+    WDTCSR |= (1<<WDCE) | (1<<WDE);
+    /* Clear WDE and WDIE within 4 cycles */
+    WDTCSR = 0x00;
+    
+    /* Restore interrupt state */
+    SREG = sreg;
 }
 
 void wdt_enable_interrupt()
 {
-    /* Interrupt, then go to System Reset Mode */
-    WDTCSR |= (1<<WDE) | (1<<WDIE);
+    /* Save current interrupt state */
+    unsigned char sreg = SREG;
+    /* Disable interrupts */
+    cli();
+    
+    /* Start timed sequence */
+    WDTCSR |= (1<<WDCE) | (1<<WDE);
+    /* Set WDE and WDIE within 4 cycles */
+    WDTCSR = (1<<WDE) | (1<<WDIE);
+    
+    /* Restore interrupt state */
+    SREG = sreg;
 }
 #pragma GCC pop_options
 
