@@ -4,6 +4,7 @@
 #define WDTCSR (*((volatile unsigned char *)0x60))
 /* WDT control bits */
 #define WDIE 6
+#define WDP3 5
 #define WDCE 4
 #define WDE 3
 #define WDP2 2
@@ -13,14 +14,15 @@
 #pragma GCC optimize("Os")
 void wdt_disable_interrupt() 
 {
-    // TODO: Clear this bit correctly lol i dont feel like thinking
-    WDTCSR |= (0<<WDE) | (0<<WDIE);
+    /* clear WDE and WDIE to disable interrupts */
+    WDTCSR &= ~(1<<WDE);
+    WDTCSR &= ~(1<<WDIE);
 }
 
 void wdt_enable_interrupt()
 {
-    // TODO: Clear this bit correctly lol i dont feel like thinking
-    WDTCSR |= (0<<WDE) | (1<<WDIE);
+    /* Interrupt, then go to System Reset Mode */
+    WDTCSR |= (1<<WDE) | (1<<WDIE);
 }
 #pragma GCC pop_options
 
@@ -44,8 +46,9 @@ void wdt_init()
     wdt_reset();
     /* start timed sequence */
     WDTCSR |= (1<<WDCE) | (1<<WDE);
-    /* adjust timeout value = 64k cycles (0.5 s) */
-    WDTCSR |= (1<<WDE) | (1<<WDP2) | (1<<WDP0);
+    /* adjust timeout value = 256k cycles (0.5 s) */
+    WDTCSR &= ~(1<<WDP3) /* clear the WDP3 bit */
+    WDTCSR |= (1<<WDP2) | (1<<WDP3) | (1<<WDP0);
     wdt_enable_interrupt();
     
 }
