@@ -86,7 +86,7 @@ void wdt_reset()
 void wdt_force_restart()
 {
     /* disable the watchdog interrupt */
-    wdt_disable_interrupt();
+    WDTCSR |= (1<<WDCE);
     /* reset the watchdog timer */
     wdt_reset();
 
