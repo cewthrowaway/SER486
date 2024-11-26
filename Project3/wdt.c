@@ -21,11 +21,6 @@
 #pragma GCC optimize("Os")
 void wdt_disable_interrupt() 
 {
-    /* Save current interrupt state */
-    unsigned char sreg = SREG;
-    /* Disable interrupts */
-    SREG &= ~(0<<7);
-    
     /* Start timed sequence */
     WDTCSR |= (1<<WDCE) | (1<<WDE);
     /* Clear WDE and WDIE within 4 cycles */
@@ -35,15 +30,11 @@ void wdt_disable_interrupt()
 
 void wdt_enable_interrupt()
 {
-    /* Save current interrupt state */
-    unsigned char sreg = SREG;
-    /* Disable interrupts */
-    SREG &= ~(1<<7);
-    
     /* Start timed sequence */
     WDTCSR |= (1<<WDCE) | (1<<WDE);
     /* Set WDE and WDIE within 4 cycles */
     WDTCSR = (1<<WDE) | (1<<WDIE) | (1<<WDP2) | (1<<WDP1) | (1<<WDP0);
+    
 
 }
 #pragma GCC pop_options
@@ -75,9 +66,11 @@ void wdt_init()
     wdt_reset();
     /* start timed sequence */
     WDTCSR |= (1<<WDCE) | (1<<WDE);
-    
+    /* adjust timeout value = 256k cycles (2.0 s) */
+    WDTCSR = (1<<WDE) | (1<<WDIE) | (1<<WDP2) | (1<<WDP1) | (1<<WDP0);
     wdt_enable_interrupt();
-        /* Restore interrupt state */
+
+    /* Restore interrupt state */
     SREG = sreg;
 }
 
