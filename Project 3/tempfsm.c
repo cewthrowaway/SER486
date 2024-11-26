@@ -1,5 +1,8 @@
-#include "tempsfm.h"
-
+#include "tempfsm.h"
+#include "alarm.h"
+#include "led.h"
+#include "log.h"
+#include "process_packet.h"
 #define TCRIT_HI 150
 #define TWARN_HI 140
 #define TWARN_LO 0
@@ -9,29 +12,40 @@ enum TEMPFSM_STATES {
 NORM_1, NORM_2, NORM_3, WARN_HI_1, WARN_HI_2, CRIT_HI, WARN_LO_1, WARN_LO_2, CRIT_LO
 };
 
-TEMPFSM_STATES tempfsm_state = NORM_1;
+enum TEMPFSM_STATES tempfsm_state = NORM_1;
 
 /* initialize the finite state machine */
 void tempfsm_init()
 {
-  //TODO: set all of the config temperatures
+  /* set the default configuration temperatures */
+  update_tcrit_hi(TCRIT_HI);
+  update_twarn_hi(TWARN_HI);
+  update_twarn_lo(TWARN_LO);
+  update_tcrit_lo(TCRIT_LO);
+  /* set the initial state */
   tempfsm_state = NORM_1;
 }
 
+/* set the warning LED */
 void set_warn_led() {
-led_set_blink("-");
+  led_set_blink("-");
 }
+
+/* set the critical LED */
 void set_crit_led() {
-led_set_blink(".");
+  led_set_blink(".");
 }
+
+/* set the normal LED */
 void set_normal_led() {
-led_set_blink(" ");
+  led_set_blink(" ");
 }
 
 /* update the state of the temperature sensor finite state machine (provides
 * hysteresis).  Sends alarms and updates the led blink based on state transitions */
 void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
 {
+  /* handle the state transitions */
   switch(tempfsm_state) {
     case NORM_1:
       if (current <= lowarn) {

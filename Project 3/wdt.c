@@ -1,4 +1,5 @@
 #include "wdt.h"
+#include "log.h"
 
 /* Watch Dog Timer Control Register */
 #define WDTCSR (*((volatile unsigned char *)0x60))
@@ -27,7 +28,8 @@ void wdt_enable_interrupt()
 #pragma GCC pop_options
 
 /* add the config stuff for the vector */
-void __vector_6(void) __attribute__ ((signal, used, externally_visible)) 
+void __vector_6(void) __attribute__((signal, used, externally_visible)); 
+void __vector_6() 
 {
     /* turn on the status led */
     led_on();
@@ -47,7 +49,7 @@ void wdt_init()
     /* start timed sequence */
     WDTCSR |= (1<<WDCE) | (1<<WDE);
     /* adjust timeout value = 256k cycles (0.5 s) */
-    WDTCSR &= ~(1<<WDP3) /* clear the WDP3 bit */
+    WDTCSR &= ~(1<<WDP3); /* clear the WDP3 bit */
     WDTCSR |= (1<<WDP2) | (1<<WDP3) | (1<<WDP0);
     wdt_enable_interrupt();
     
