@@ -24,15 +24,13 @@ void wdt_disable_interrupt()
     /* Save current interrupt state */
     unsigned char sreg = SREG;
     /* Disable interrupts */
-    SREG &= ~(1<<7);
+    SREG &= ~(0<<7);
     
     /* Start timed sequence */
     WDTCSR |= (1<<WDCE) | (1<<WDE);
     /* Clear WDE and WDIE within 4 cycles */
     WDTCSR = 0x00;
     
-    /* Restore interrupt state */
-    SREG = sreg;
 }
 
 void wdt_enable_interrupt()
@@ -47,8 +45,7 @@ void wdt_enable_interrupt()
     /* Set WDE and WDIE within 4 cycles */
     WDTCSR = (1<<WDE) | (1<<WDIE);
     
-    /* Restore interrupt state */
-    SREG = sreg;
+
 }
 #pragma GCC pop_options
 
@@ -70,6 +67,11 @@ void __vector_6()
 /* initialize the watchdog timer for a 2 second timeout and interrupt+reset mode */
 void wdt_init() 
 {
+    /* Save current interrupt state */
+    unsigned char sreg = SREG;
+    /* Disable interrupts */
+    SREG &= ~(1<<7);
+
     wdt_disable_interrupt();
     wdt_reset();
     /* start timed sequence */
@@ -77,7 +79,8 @@ void wdt_init()
     /* adjust timeout value = 256k cycles (2.0 s) */
     WDTCSR = (1<<WDE) | (1<<WDIE) | (1<<WDP2) | (1<<WDP1) | (1<<WDP0);
     wdt_enable_interrupt();
-    
+        /* Restore interrupt state */
+    SREG = sreg;
 }
 
 /* reset the watchdog timer so that it does not time out. */
