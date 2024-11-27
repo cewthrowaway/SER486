@@ -1,3 +1,13 @@
+/********************************************************
+ * wdt.c
+ *
+ * this file provides function implementation for SER486
+ * project 3 watchdog timer code.
+ *
+ * Author:   DaVonte Carter Vault
+ * Date:     11/27/2024
+ * Revision: 1.0
+ */
 #include "wdt.h"
 #include "log.h"
 #include "led.h"
@@ -14,11 +24,21 @@
 #define WDP2 2
 #define WDP1 1
 #define WDP0 0
-
+/* Global Interrupt Enable Register */
 #define SREG (*((volatile unsigned char *)0x5F))
+#define I_BIT 7
 
 #pragma GCC push_options
 #pragma GCC optimize("Os")
+/************************************************
+ * wdt_disable_interrupt
+ * Description: This function disables the watchdog timer interrupt
+ * 
+ * Arguments: None.
+ * Returns: Nothing 
+ * Changes:
+ *    - Disables the watchdog timer interrupt
+ ************************************************/
 void wdt_disable_interrupt() 
 {
     /* Start timed sequence */
@@ -27,7 +47,15 @@ void wdt_disable_interrupt()
     WDTCSR = 0x00;
     
 }
-
+/************************************************
+ * wdt_enable_interrupt
+ * Description: This function enables the watchdog timer interrupt
+ * 
+ * Arguments: None.
+ * Returns: Nothing 
+ * Changes:
+ *    - Enables the watchdog timer interrupt
+ ************************************************/
 void wdt_enable_interrupt()
 {
     /* Start timed sequence */
@@ -39,11 +67,23 @@ void wdt_enable_interrupt()
 }
 #pragma GCC pop_options
 
-/* add the config stuff for the vector */
+/************************************************
+ * __vector_    6
+ * Interrupt Service Routine (ISR) for watchdog timer operations.
+ * Description: This ISR is triggered when the watchdog timer times out.
+ *              It turns on the status led, writes the event to the log,
+ *              and then restarts the system.
+ * 
+ * Arguments: None.
+ * Returns: Nothing 
+ * Changes:
+ *    - Turns on the status led
+ *    - Writes the event to the log
+ *    - Restarts the system
+ ************************************************/
 void __vector_6(void) __attribute__((signal, used, externally_visible)); 
 void __vector_6() 
 {
-    uart_writestr("WDT interrupt\n");
     /* turn on the status led */
     led_on();
     /* write the event to log */
@@ -54,13 +94,23 @@ void __vector_6()
     config_update_noisr();
 }
 
-/* initialize the watchdog timer for a 2 second timeout and interrupt+reset mode */
+/************************************************
+ * wdt_init
+ * Description: This function initializes the watchdog timer
+ * 
+ * Arguments: None.
+ * Returns: Nothing 
+ * Changes:
+ *    - Temporarily Disables Global interrupts
+ *    - Sets the watchdog timer for a 2 second timeout and interrupt+reset mode
+ *    - Enables the watchdog timer interrupt
+ ************************************************/
 void wdt_init() 
 {
     /* Save current interrupt state */
     unsigned char sreg = SREG;
     /* Disable interrupts */
-    SREG &= ~(1<<7);
+    SREG &= ~(1<<I_BIT);
 
     wdt_disable_interrupt();
     wdt_reset();
@@ -74,15 +124,32 @@ void wdt_init()
     SREG = sreg;
 }
 
-/* reset the watchdog timer so that it does not time out. */
+/************************************************
+ * wdt_reset
+ * Description: This function resets the watchdog timer
+ * 
+ * Arguments: None.
+ * Returns: Nothing 
+ * Changes:
+ *    - Resets the watchdog timer
+ ************************************************/
 void wdt_reset()
 {
     __builtin_avr_wdr();
 }
 
-/* force a system restart (reset only, no interrupt) by disabling the watchdog
-* interupt and waiting for a watchdog timeout.
-*/
+/************************************************
+ * wdt_force_restart
+ * Description: This function forces a restart of the system
+ * 
+ * Arguments: None.
+ * Returns: Nothing 
+ * Changes:
+ *    - Disables the watchdog interrupt
+ *    - Resets the watchdog timer
+ *    - Calls ISR and saves log and config
+ *    - Waits for a watchdog timeout
+ ************************************************/
 void wdt_force_restart()
 {
     /* disable the watchdog interrupt */

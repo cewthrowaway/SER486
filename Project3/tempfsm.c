@@ -1,3 +1,13 @@
+/********************************************************
+ * tempfsm.c
+ *
+ * this file provides function implementation for SER486
+ * project 3 temperature finite state machine code.
+ *
+ * Author:   DaVonte Carter Vault
+ * Date:     11/27/2024
+ * Revision: 1.0
+ */
 #include "tempfsm.h"
 #include "alarm.h"
 #include "led.h"
@@ -8,13 +18,24 @@
 #define TWARN_LO 0
 #define TCRIT_LO -40
 
+/* declare the states of the temperature finite state machine */
 enum TEMPFSM_STATES {
 NORM_1, NORM_2, NORM_3, WARN_HI_1, WARN_HI_2, CRIT_HI, WARN_LO_1, WARN_LO_2, CRIT_LO
 };
 
+/* declare the current state of the temperature finite state machine */
 enum TEMPFSM_STATES tempfsm_state = NORM_1;
 
-/* initialize the finite state machine */
+/************************************************
+ * tempfsm_init
+ * Description: This function initializes the temperature finite state machine
+ * 
+ * Arguments: None.
+ * Returns: Nothing 
+ * Changes:
+ *    - Sets the default configuration temperatures
+ *    - Sets the initial state to NORM_1
+ ************************************************/
 void tempfsm_init()
 {
   /* set the default configuration temperatures */
@@ -26,23 +47,59 @@ void tempfsm_init()
   tempfsm_state = NORM_1;
 }
 
-/* set the warning LED */
+/************************************************
+ * set_warn_led
+ * Description: This function sets the warning LED
+ * 
+ * Arguments: None.
+ * Returns: Nothing 
+ * Changes:
+ *    - Sets the LED message to "-"
+ ************************************************/
 void set_warn_led() {
   led_set_blink("-");
 }
 
-/* set the critical LED */
+/************************************************
+ * set_crit_led
+ * Description: This function sets the critical LED
+ * 
+ * Arguments: None.
+ * Returns: Nothing 
+ * Changes:
+ *    - Sets the LED message to "."
+ ************************************************/
 void set_crit_led() {
   led_set_blink(".");
 }
 
-/* set the normal LED */
+/************************************************
+ * set_normal_led
+ * Description: This function sets the normal LED
+ * 
+ * Arguments: None.
+ * Returns: Nothing 
+ * Changes:
+ *    - Sets the LED message to " "
+ ************************************************/
 void set_normal_led() {
   led_set_blink(" ");
 }
 
-/* update the state of the temperature sensor finite state machine (provides
-* hysteresis).  Sends alarms and updates the led blink based on state transitions */
+/************************************************
+ * tempfsm_update
+ * Description: This function updates the state of the temperature sensor finite state machine
+ * 
+ * Arguments: 
+ *     - current - the current temperature
+ *     - hicrit - the critical high temperature
+ *     - hiwarn - the warning high temperature
+ *     - locrit - the critical low temperature
+ *     - lowarn - the warning low temperature
+ * Returns: Nothing 
+ * Changes:
+ *    - Updates the state transitions
+ ************************************************/
 void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
 {
   /* handle the state transitions */
@@ -175,7 +232,15 @@ void tempfsm_update(int current, int hicrit, int hiwarn, int locrit, int lowarn)
 
 }
 
-/* reset the state machine to the initial state (normal) */
+/************************************************
+ * tempfsm_reset
+ * Description: This function resets the temperature finite state machine to the initial state
+ * 
+ * Arguments: None.
+ * Returns: Nothing 
+ * Changes:
+ *    - Resets the state machine to NORM_1
+ ************************************************/
 void tempfsm_reset()
 {
   tempfsm_state = NORM_1;
