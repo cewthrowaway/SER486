@@ -32,21 +32,31 @@ int main(void)
 {
 	/* Initialize the hardware devices
 	 * uart
+      uart_init();
 	 * led
+      led_init();
 	 * vpd
+      vpd_init();
 	 * config
+      config_init();
      * log
+     log_init();
      * rtc
+     rtc_init();
      * spi
+     spi_init();
      * temp sensor
+     temp_init();
 	 * W51 Ethernet controller
+      W51_init();
      * tempfsm
+     tempfsm_init();
      */
 
     /* sign the assignment
     * Asurite is the first part of your asu email (before the @asu.edu
     */
-    signature_set("firstname","lastname","asurite");
+    signature_set("DaVonte","Carter Vault","dcarterv");
 
     /* configure the W51xx ethernet controller prior to DHCP */
     unsigned char blank_addr[] = {0,0,0,0};
@@ -84,34 +94,52 @@ int main(void)
     * this long delay ensures that the temperature spike during startup does not
     * trigger any false alarms.
     */
+    temp_start();
+    delay_set(1,5000);
 
 
-    while (1) {
-        /* reset  the watchdog timer every loop */
+    while(1) {
+       /* reset  the watchdog timer every loop */
+       wdt_reset();
 
-        /* update the LED blink state */
+       /* update the led state based on the blink code */
+       led_update();
 
-        /* if the temperature sensor delay is done, update the current temperature
-        * from the temperature sensor, update the temperature sensor finite state
-        * machine (which provides hysteresis) and send any temperature sensor
-        * alarms (from FSM update).
-        */
-        {
-            /* read the temperature sensor */
+       /* if the temperature sensor delay is done, update the current temperature
+       * from the temperature sensor, update the temperature sensor finite state
+       * machine (which provides hysteresis) and send any temperature sensor
+       * alarms (from FSM update).
+       */
+       if (delay_isdone(1)) {
+          /* read the temperature sensor */
+          current_temperature = temp_get();
 
-            /* update the temperature fsm and send any alarms associated with it */
+          tempfsm_update(current_temperature,config.hi_alarm,config.hi_warn,config.lo_alarm,config.lo_warn);
 
-            /* restart the temperature sensor delay to trigger in 1 second */
-
-        } /*if the server socket is closed */ {
-            /* if socket is closed, open it in passive (listen) mode */
-
-        } /* if there is input to process */ {
-            /* parse and process any pending commands */
-        } /* otherwise... */ {
-          /* update any pending log write backs */
-
-          /* update any pending config write backs */
+          /* restart the temperature sensor delay to trigger in 1 second */
+          temp_start();
+          delay_set(1,1000);
+       } else if (connected == 0) {
+          /* if the connection state is 0 (unconnected), wait for the socket to connect */
+          if (uartsocket_is_connected()) {
+             /* socket is now connected - print a message to the uart debug port and update our connection status */
+             uart_writestr("Connection Established\r\n");
+             connected = 1;
+          }
+       } else if (uartsocket_is_packet_available()) {
+           /* here if we are connected and a packet is available for processing.
+           * Process the packet, update the device state and send the appropriate response to the client
+           */
+           parse_and_send_response();
+           if (!uartsocket_is_connected()) {
+              /* if connection is lost, print a debug message and update the connection state */
+              uartsocket_writestr("Connection Lost\r\n");
+              connected = 0;
+           }
+       } else {
+          /* update any pending write backs */
+          if (!eeprom_isbusy()) log_update();
+          if (!eeprom_isbusy()) config_update();
        }
     }
 	return 0;
