@@ -30,28 +30,16 @@ int current_temperature = 75;
 
 int main(void)
 {
-	/* Initialize the hardware devices
-	 * uart
-      uart_init();
-	 * led
-      led_init();
-	 * vpd
-      vpd_init();
-	 * config
-      config_init();
-     * log
-     log_init();
-     * rtc
-     rtc_init();
-     * spi
-     spi_init();
-     * temp sensor
-     temp_init();
-	 * W51 Ethernet controller
-      W51_init();
-     * tempfsm
-     tempfsm_init();
-     */
+	uart_init();
+	led_init();
+	vpd_init();
+	config_init();
+	log_init();
+	rtc_init();
+	spi_init();
+	temp_init();
+	W51_init();
+	tempfsm_init();
 
     /* sign the assignment
     * Asurite is the first part of your asu email (before the @asu.edu
