@@ -238,17 +238,76 @@ void httpparser_update() {
         case PARSER_ERROR:
             /* delete the line and try again */
             socket_flush_line(server_socket);
+            /* TODO: Send the error response 200 */
             httpparser_state = PARSER_WAITING;
         break;
         case PARSER_RESPOND:
+            /* todo send the success response 200 for all */
             if (method == METHOD_GET) {
-                
+                /* todo: send the gets */
+                break;
             }
             if (method == METHOD_PUT) {
+                if (header_key == HEADER_KEY_RESET && header_value) {
+                    wdt_force_restart();
+                    httpparser_state = PARSER_WAITING;
+                    break;
+                }
+                else if (header_key == HEADER_KEY_TCRITHI) {
+                    if (header_value > config.hi_warn) { 
+                        config.hi_crit = header_value;
+                        httpparser_state = PARSER_WAITING;
+                        break;
+                    }
+                    else {
+                        httpparser_state = PARSER_ERROR;
+                        break;
+                    }
+                }
+                else if (header_key == HEADER_KEY_TCRITLO) {
+                    if (header_value < config.lo_warn) { 
+                        config.lo_crit = header_value;
+                        httpparser_state = PARSER_WAITING;
+                        break;
+                    }
+                    else {
+                        httpparser_state = PARSER_ERROR;
+                        break;
+                    }
+                }
+                else if (header_key == HEADER_KEY_TWARNHI) {
+                    if (header_value > config.lo_warn && header_value < config.hi_crit) { 
+                        config.hi_warn = header_value;
+                        httpparser_state = PARSER_WAITING;
+                        break;
+                    }
+                    else {
+                        httpparser_state = PARSER_ERROR;
+                        break;
+                    }
+                }
+                else if (header_key == HEADER_KEY_TWARNLO) {
+                    if (header_value < config.hi_warn && header > config.lo_crit) { 
+                        config.hi_crit = header_value;
+                        httpparser_state = PARSER_WAITING;
+                        break;
+                    }
+                }
+                else {
+                    /* how did i get here */
+                    httpparser_state = PARSER_ERROR;
+                    break;
+                }
                 
             }
-            if (method == METHOD_DELETE && uri == URI_LOG) {
-                
+            else if (method == METHOD_DELETE && uri == URI_LOG) {
+                log_clear();
+                /* send the success */
+                httpparser_state = PARSER_WAITING;
+            }
+            else {
+                /* how did i get here??? */
+                httpparser_state = PARSER_ERROR;
             }
         break;
         default:
@@ -257,34 +316,3 @@ void httpparser_update() {
     
 }
 
-/************************************************
- * cmp_str
- * Description: Reads a specified amount of data from the EEPROM 
- *              starting at the specified address and stores it in 
- *              the provided buffer.
- * 
- * Arguments:
- *    - addr: The starting address in the EEPROM to read from.
- *    - buf: Pointer to the buffer where the read data will be stored.
- *    - size: The number of bytes to read from the EEPROM.
- * 
- * Returns: None.
- * Changes:
- *    - Populates the provided buffer with data read from the EEPROM.
- ************************************************/
-int cmp_str(const char *str1, const char *str2)
-{
-    /* while strings are valid */
-  while (*str1 && *str2)
-  {
-    /* if the values are ever not the same, then stop */
-    if (*str1 != *str2)
-    {
-      return 0;
-    }
-    /* go to the next character */
-    str1++;
-    str2++;
-  }
-  return *str1 == '\0' && *str2 == '\0';
-}
