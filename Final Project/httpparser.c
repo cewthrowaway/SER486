@@ -316,3 +316,37 @@ void httpparser_update() {
     
 }
 
+
+
+void send_error_response() {
+    socket_connect(server_socket, addr, SERVER_PORT);
+    socket_writestr(server_socket,"HTTP/1.1 400 Bad Request\r\n");
+    socket_writestr(server_socket,"Connection: close\r\n");
+    socket_writestr(server_socket,"\r\n");
+    socket_disconnect(server_socket);
+}
+void send_success_response() {
+/* todo: define addr */
+    socket_connect(server_socket, addr, SERVER_PORT);
+    socket_writestr(server_socket,"HTTP/1.1 200 OK\r\n");
+    socket_writestr(server_socket,"Connection: close\r\n");
+    socket_writestr(server_socket,"\r\n");
+    socket_disconnect(server_socket);
+}
+void send_device_response() {
+    socket_connect(server_socket, addr, SERVER_PORT);
+    socket_writestr(server_socket,"HTTP/1.1 200 OK\r\n");
+    socket_writestr(server_socket,"Content-Type: application/vnd.api + json\r\n");
+    socket_writestr(server_socket,"Connection: close\r\n");
+    socket_writestr(server_socket,"\r\n");
+    /* ******* start Body ******** */
+    socket_writestr(server_socket,"{\r\n");
+    socket_writequotedstring(server_socket,"vpd");
+    socket_writestr(server_socket,":{");
+    socket_writequotedstring(server_socket,"model");
+    socket_writestr(server_socket,":");
+    socket_writequotedstring(server_socket,config.model);
+
+    
+    socket_disconnect(server_socket);
+}
