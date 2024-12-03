@@ -23,11 +23,10 @@ struct http_response {
   char body[48]
 };
   
-
-void server_init(char* socket);
+void server_init(int socket, char* address, int port);
 void server_start();
 void server_update();
-void server_send_error(char* message);
-void server_send_data(struct http_data);
+
+void server_send_response(struct http_response);
 
 #endif
