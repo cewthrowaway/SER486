@@ -2,89 +2,259 @@
 #include "socket.h"
 
 #define SOCKET_CONNECTED 1
+#define SERVER_PORT 8080
+
+#define METHOD_GET 0
+#define METHOD_PUT 1
+#define METHOD_DELETE 2
+
+#define URI_LOG 0
+#define URI_CONFIG 1
+#define URI_DEVICE 2
+
+#define HEADER_KEY_TCRITHI 0
+#define HEADER_KEY_TCRITLO 1
+#define HEADER_KEY_TWARNHI 2
+#define HEADER_KEY_TWARNLO 3
+#define HEADER_KEY_RESET 4
 
 enum httpparser_state {
-    PARSER_READY,
+    PARSER_RECONNECTING,
+    PARSER_WAITING,
+    PARSER_METHOD,
     PARSER_URI,
-    PARSER_VERSION,
-    PARSER_HEADERS_START,
-    PARSER_HEADER_KEY,
-    PARSER_HEADER_VALUE,
-    PARSER_HEADERS_END,
-    PARSER_BODY,
-    PARSER_DONE,
-    PARSER_ERROR
+    PARSER_VARIABLE_KEY,
+    PARSER_VARIABLE_VALUE,
+    PARSER_ERROR,
+    PARSER_RESPOND
 } httpparser_state;
 
-enum httpparser_state httpparser_state = PARSER_READY;
+enum httpparser_state httpparser_state = PARSER_WAITING;
 
 
-unsigned char *method;
-unsigned char *uri;
-unsigned char *version;
-char body[24];
+unsigned char method;
+unsigned char uri
+unsigned char header_key;
+int header_value;
+
 unsigned int body_index = 0;
+usigned char socket;
 
-void httpparser_init() {
+void httpparser_init(unsigned char socket) {
     httpparser_state = PARSER_READY;
-    body_index = 0;
+    server_socket = socket;
 }
 
 void httpparser_update() {
-    /* if the socket is not connected, return */
-    if (!socket_is_active(SOCKET_CONNECTED)) {
-        return;
-    }
-
-    switch (httpparser_state) {
-        case PARSER_READY:
-            if (socket_recv_compare(SOCKET_CONNECTED, "GET ")) {
-                method = "GET";
-                httpparser_state = PARSER_URI;
+    switch(httpparser_state) {
+        case PARSER_RECONNECTING:
+            socket_open(server_socket);
+            socket_listen(server_socket,SERVER_PORT);
+            httpparser_state = PARSER_WAITING;
+        break;
+        case PARSER_WAITING:
+            if (!socket_is_listening(server_socket))
+            {
+                httpparser_state = PARSER_RECONNECTING;
+                break;
             }
-            else if (socket_recv_compare(SOCKET_CONNECTED, "PUT ")) {
-                method = "PUT";
-                httpparser_state = PARSER_URI;
+            else if (socket_received_line(server_socket)) 
+            {
+                httpparser_state = PARSER_METHOD;
+                break;
             }
-            else if (socket_recv_compare(SOCKET_CONNECTED, "DELETE ")) {
-                method = "DELETE";
+        break;
+        case PARSER_METHOD:
+            if (socket_recv_compare(server_socket,"GET")) {
+                method = METHOD_GET;
                 httpparser_state = PARSER_URI;
+                break;
+            }
+            else if (socket_recv_compare(server_socket,"PUT")) {
+                method = METHOD_PUT;
+                httpparser_state = PARSER_URI;
+                break;
+            }
+            else if (socket_recv_compare(server_socket,"DELETE")) {
+                method = METHOD_DELETE;
+                httpparser_state = PARSER_URI;
+                break;
             }
             else {
-                /* invalid method mark to clear*/
                 httpparser_state = PARSER_ERROR;
             }
-            break;
+        break;
         case PARSER_URI:
-            if (socket_recv_compare(SOCKET_CONNECTED, "\\device\\log") && cmp_str(method, "DELETE")) {
-                uri = "\\device\\log";
-                httpparser_state = PARSER_VERSION;
+            if (socket_recv_compare(server_socket, "\\device") {
+                /* /device/log */
+                if (socket_recv_compare(server_socket,"\\log") {
+                    if (method == METHOD_DELETE) {
+                        uri = URI_LOG;
+                        httpparser_state = PARSER_RESPOND;
+                        break;
+                    }
+                        
+                    /* invalid method for route*/
+                    else {
+                        httpparser_state = PARSER_ERROR;
+                        break;
+                    }
+                } 
+                
+                /* /device/config? */
+                else if (socket_recv_compare(server_socket,"\\config?") {
+                    if (method == METHOD_PUT) {
+                        uri = URI_CONFIG;
+                        httpparser_state = PARSER_VARIABLE_KEY;
+                        break;
+                    }
+                        
+                    /* invalid method for route */
+                    else {
+                        httpparser_state = PARSER_ERROR;
+                        break;
+                    }
+                }
+                /* /device */
+                else if (socket_recv_compare(server_socket," ") {
+                    if (method == METHOD_GET) {
+                        uri = URI_DEVICE;
+                        httpparser_state = PARSER_RESPOND;
+                        break;
+                    }
+                    /* invalid method for route */
+                    else {
+                        httpparser_state = PARSER_ERROR;
+                        break;
+                    }
+                }
+                    
+                /* /device? */
+                else if (socket_recv_compare(server_socket, "?") {
+                    if (method == METHOD_PUT) {
+                        uri = URI_DEVICE;
+                        httpparser_state = PARSER_VARIABLE_KEY;
+                        break;
+                    }
+                }
+                /* invalid method for route */
+                else {
+                    httpparser_state = PARSER_ERROR;
+                    break;
+                }
             }
-            else if (socket_recv_compare(SOCKET_CONNECTED, "\\device\\config\\") && cmp_str(method, "PUT")) {
-                uri = "\\device\\config\\";
-                httpparser_state = PARSER_VERSION;
+            /* invalid route */
+            else
+            {
+                httpparser_state = PARSER_ERROR;
+                break;
             }
-            else if (socket_recv_compare(SOCKET_CONNECTED, "\\device") && (cmp_str(method, "GET") || cmp_str(method, "PUT"))) {
-                uri = "\\device";
-                httpparser_state = PARSER_VERSION;
+
+        break;
+        case PARSER_VARIABLE_KEY:
+            if (uri == URI_CONFIG) {
+                if (socket_recv_compare(server_socket,"tcrit_hi=")) {
+                    header_key = HEADER_KEY_TCRITHI;
+                    httpparser_state = PARSER_VARIABLE_VALUE;
+                    break;
+                }
+                else if (socket_recv_compare(server_socket,"twarn_hi=")) {
+                    header_key = HEADER_KEY_TWARNHI;
+                    httpparser_state = PARSER_VARIABLE_VALUE;
+                    break;
+                }
+                else if (socket_recv_compare(server_socket,"tcrit_lo=")) {
+                    header_key = HEADER_KEY_TCRITLO;
+                    httpparser_state = PARSER_VARIABLE_VALUE;
+                    break;
+                }
+                else if (socket_recv_compare(server_socket,"twarn_lo=")) {
+                    header_key = HEADER_KEY_TWARNLO;
+                    httpparser_state = PARSER_VARIABLE_VALUE;
+                    break;
+                }
+                else {
+                    /* invalid key */
+                    httpparser_state = PARSER_ERROR;
+                    break;
+                }
+            }
+            else if (uri == URI_DEVICE) {
+                if (socket_recv_compare(server_socket,"reset=")) {
+                    header_key = HEADER_KEY_RESET;
+                    httpparser_state = PARSER_VARIABLE_VALUE;
+                    break;
+                }
+                else {
+                    /* invalid key */
+                    httpparser_state = PARSER_ERROR;
+                    break;
+                }
             }
             else {
-                /* invalid uri mark to clear*/
+                /* we should never have entered this */
+                /* we have a bad state transition */
                 httpparser_state = PARSER_ERROR;
+                break;
             }
-            break;
-        case PARSER_VERSION:
-            break;
 
+        break;
+        case PARSER_VARIABLE_VALUE:
+            if (header_key == HEADER_KEY_RESET) {
+                if (socket_recv_compare(server_socket,"false")) {
+                    header_value = 0;
+                    httpparser_state = PARSER_RESPOND;
+                    break;
+                }
+                else if (socket_recv_compare(server_socket,"true")) {
+                    header_value = 1;
+                    httpparserver_state = PARSER_RESPOND;
+                    break;
+                }
+                else {
+                    /* invalid value */
+                    httpparser_state = PARSER_ERROR;
+                    break;
+                }
+            }
+            else if (header_key < HEADER_KEY_RESET) {
+                if (socket_recv_int(server_socket, &header_value)) {
+                     httpparser_state = PARSER_RESPOND;
+                    break;
+                }
+                else 
+                {
+                    /* invalid value */
+                    httpparser_state = PARSER_ERROR;
+                    break;
+                }
+            }
+            else {
+                /* invalid header key */
+                /* should never have been in here */
+                httpparser_state = PARSER_ERROR;
+                break;
+        break;
         case PARSER_ERROR:
-            /* clean up and reinitialize */
-            socket_flush_lines(SOCKET_CONNECTED);
-            httpparser_init();
-            break;
+            /* delete the line and try again */
+            socket_flush_line(server_socket);
+            httpparser_state = PARSER_WAITING;
+        break;
+        case PARSER_RESPOND:
+            if (method == METHOD_GET) {
+                
+            }
+            if (method == METHOD_PUT) {
+                
+            }
+            if (method == METHOD_DELETE && uri == URI_LOG) {
+                
+            }
+        break;
         default:
-            httpparser_state = PARSER_READY;
-            break;
+            httpparser_state = PARSER_ERROR;
     }
+    
 }
 
 /************************************************
