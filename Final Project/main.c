@@ -22,6 +22,8 @@
 #include "ntp.h"
 #include "w51.h"
 #include "signature.h"
+#include "httpparser.h"
+
 
 #define HTTP_PORT       8080	/* TCP port for HTTP */
 #define SERVER_SOCKET   0
@@ -40,6 +42,9 @@ int main(void)
 	temp_init();
 	W51_init();
 	tempfsm_init();
+	httpparser_init();
+
+    unsigned char connected = 0;  /* 1 if socket is connected, otherwise, 0 */
 
     /* sign the assignment
     * Asurite is the first part of your asu email (before the @asu.edu
